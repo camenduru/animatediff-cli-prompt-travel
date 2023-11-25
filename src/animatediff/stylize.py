@@ -3,6 +3,7 @@ import json
 import logging
 import os.path
 import shutil
+import pytz
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
@@ -236,7 +237,8 @@ def create_config(
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_tile"), dirs_exist_ok=True)
 #    else:
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_openpose"), dirs_exist_ok=True)
-#    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart"), dirs_exist_ok=True)
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart_anime"), dirs_exist_ok=True)
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_depth"), dirs_exist_ok=True)
 
 #    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
@@ -246,25 +248,28 @@ def create_config(
         with open(ignore_list) as f:
             black_list = [s.strip() for s in f.readlines()]
 
-    model_config.prompt_map = get_labels(
-        frame_dir=img2img_dir,
-        interval=predicte_interval,
-        general_threshold=general_threshold,
-        character_threshold=character_threshold,
-        ignore_tokens=black_list,
-        with_confidence=with_confidence,
-        is_danbooru_format=is_danbooru_format,
-        is_cpu = False,
-    )
+#    model_config.prompt_map = get_labels(
+#        frame_dir=img2img_dir,
+#        interval=predicte_interval,
+#        general_threshold=general_threshold,
+#        character_threshold=character_threshold,
+#        ignore_tokens=black_list,
+#        with_confidence=with_confidence,
+#        is_danbooru_format=is_danbooru_format,
+#        is_cpu = False,
+#    )
 
+    model_config.prompt_map = {
+                "0": "best quality"
+    }
 
-    model_config.head_prompt = ""
-    model_config.tail_prompt = ""
+#    model_config.head_prompt = ""
+#    model_config.tail_prompt = ""
     model_config.controlnet_map["input_image_dir"] = os.path.relpath(controlnet_img_dir.absolute(), data_dir)
     model_config.controlnet_map["is_loop"] = False
 
-    model_config.lora_map={}
-    model_config.motion_lora_map={}
+#    model_config.lora_map={}
+#    model_config.motion_lora_map={}
 
     if low_vram:
         model_config.controlnet_map["max_samples_on_vram"] = 0
@@ -392,38 +397,38 @@ def create_config(
             "context": 16,
             "overlap": 16//4,
             "stride": 0,
-        },
-        "1":{
-            "steps": model_config.steps,
-            "guidance_scale": model_config.guidance_scale,
-            "width": int(width * 1.5 //8*8),
-            "height": int(height * 1.5 //8*8),
-            "length": length,
-            "context": 8,
-            "overlap": 8//4,
-            "stride": 0,
-            "controlnet_tile":{
-                "enable": True,
-                "use_preprocessor":True,
-                "guess_mode":False,
-                "controlnet_conditioning_scale": 1.0,
-                "control_guidance_start": 0.0,
-                "control_guidance_end": 1.0,
-                "control_scale_list":[]
-            },
-            "controlnet_ip2p": {
-                "enable": False,
-                "use_preprocessor":True,
-                "guess_mode":False,
-                "controlnet_conditioning_scale": 0.5,
-                "control_guidance_start": 0.0,
-                "control_guidance_end": 1.0,
-                "control_scale_list":[]
-            },
-            "ip_adapter": False,
-            "reference": False,
-            "img2img": False,
-            "interpolation_multiplier": 1
+#        },
+#        "1":{
+#            "steps": model_config.steps,
+#            "guidance_scale": model_config.guidance_scale,
+#            "width": int(width * 1.5 //8*8),
+#            "height": int(height * 1.5 //8*8),
+#            "length": length,
+#            "context": 8,
+#            "overlap": 8//4,
+#            "stride": 0,
+#            "controlnet_tile":{
+#                "enable": True,
+#                "use_preprocessor":True,
+#                "guess_mode":False,
+#                "controlnet_conditioning_scale": 1.0,
+#                "control_guidance_start": 0.0,
+#                "control_guidance_end": 1.0,
+#                "control_scale_list":[]
+#            },
+#            "controlnet_ip2p": {
+#                "enable": False,
+#                "use_preprocessor":True,
+#                "guess_mode":False,
+#                "controlnet_conditioning_scale": 0.5,
+#                "control_guidance_start": 0.0,
+#                "control_guidance_end": 1.0,
+#                "control_scale_list":[]
+#            },
+#            "ip_adapter": False,
+#            "reference": False,
+#            "img2img": False,
+#            "interpolation_multiplier": 1
         }
     }
 
@@ -477,8 +482,9 @@ def generate(
     """Run video stylization"""
     from animatediff.cli import generate
 
+    singapore_timezone = pytz.timezone('Asia/Singapore')
+    time_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    time_str = "jjj"
 
     config_org = stylize_dir.joinpath("prompt.json")
 
@@ -562,7 +568,16 @@ def generate(
     )
 
     torch.cuda.empty_cache()
-
+    
+    try:
+        # フォルダが存在する場合のみ削除
+        shutil.rmtree(output_0_dir.parent / f"{time_str}_{0:02d}")
+        print(f"Output Folder deleted successfully.")
+    except FileNotFoundError:
+        print(f"Output Folder does not exist.")
+    except Exception as e:
+        print(f"Error occurred while deleting Output folder: {e}")
+        
     output_0_dir = output_0_dir.rename(output_0_dir.parent / f"{time_str}_{0:02d}")
 
 
@@ -653,6 +668,15 @@ def generate(
         out_dir=stylize_dir
     )
 
+    try:
+        # フォルダが存在する場合のみ削除
+        shutil.rmtree(output_0_dir.parent / f"{time_str}_{1:02d}")
+        print(f"Output Folder deleted successfully.")
+    except FileNotFoundError:
+        print(f"Output Folder does not exist.")
+    except Exception as e:
+        print(f"Error occurred while deleting Output folder: {e}")
+    
     output_1_dir = output_1_dir.rename(output_1_dir.parent / f"{time_str}_{1:02d}")
 
     logger.info(f"Stylized results are output to {output_1_dir}")

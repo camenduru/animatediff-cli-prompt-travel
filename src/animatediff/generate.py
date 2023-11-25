@@ -2,6 +2,8 @@ import glob
 import logging
 import os
 import re
+import pytz
+from datetime import datetime
 from functools import partial
 from itertools import chain
 from os import PathLike
@@ -1436,8 +1438,12 @@ def run_inference(
     prompt_map = region_condi_list[0]["prompt_map"]
     prompt_tags = [re_clean_prompt.sub("", tag).strip().replace(" ", "-") for tag in prompt_map[list(prompt_map.keys())[0]].split(",")]
     prompt_str = "_".join((prompt_tags[:6]))[:50]
-    frame_dir = out_dir.joinpath(f"{idx:02d}-{seed}")
-    out_file = out_dir.joinpath(f"{idx:02d}_{seed}_{prompt_str}")
+    singapore_timezone = pytz.timezone('Asia/Singapore')
+    now_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
+    frame_dir = out_dir.joinpath(f"{idx:02d}-{now_str}")
+    out_file = out_dir.joinpath(f"{idx:02d}_{now_str}_")
+#    frame_dir = out_dir.joinpath(f"{idx:02d}-{seed}")
+#    out_file = out_dir.joinpath(f"{idx:02d}_{seed}_{prompt_str}")
 
     def preview_callback(i: int, video: torch.Tensor, save_fn: Callable[[torch.Tensor], None], out_file: str) -> None:
         save_fn(video, out_file=Path(f"{out_file}_preview@{i}"))
