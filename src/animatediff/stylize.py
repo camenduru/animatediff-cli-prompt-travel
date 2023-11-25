@@ -51,7 +51,7 @@ def create_config(
             exists=True,
             help="Path to original config file",
         ),
-    ] = Path("config/prompts/prompt_travel.json"),
+    ] = Path("config/prompts/stylize_base.json"),
     ignore_list: Annotated[
         Path,
         typer.Option(
@@ -170,7 +170,8 @@ def create_config(
             is_flag=True,
             help="danbooru token format or not. ex. 'bandaid_on_leg, short_hair' -> 'bandaid on leg, short hair'",
         ),
-    ] = False,
+#    ] = False,
+    ] = True,
     is_img2img: Annotated[
         bool,
         typer.Option(
@@ -213,9 +214,11 @@ def create_config(
     model_config: ModelConfig = get_model_config(config_org)
 
     # get a timestamp for the output directory
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    time_str = "jjj"
     # make the output directory
-    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
+#    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
+    save_dir = out_dir.joinpath(f"{time_str}-{org_movie.stem}")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
@@ -229,13 +232,14 @@ def create_config(
         c_dir = controlnet_img_dir.joinpath(c)
         c_dir.mkdir(parents=True, exist_ok=True)
 
-    if not is_img2img:
-        shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_tile"), dirs_exist_ok=True)
-    else:
-        shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_openpose"), dirs_exist_ok=True)
+#    if not is_img2img:
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_tile"), dirs_exist_ok=True)
+#    else:
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_openpose"), dirs_exist_ok=True)
+#    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart"), dirs_exist_ok=True)
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_depth"), dirs_exist_ok=True)
 
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
-
+#    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
 
     black_list = []
     if ignore_list.is_file():
@@ -267,30 +271,31 @@ def create_config(
         model_config.controlnet_map["max_models_on_vram"] = 0
 
 
-    if not is_img2img:
-        model_config.controlnet_map["controlnet_tile"] = {
-        "enable": True,
-        "use_preprocessor":True,
-        "guess_mode":False,
-        "controlnet_conditioning_scale": 1.0,
-        "control_guidance_start": 0.0,
-        "control_guidance_end": 1.0,
-        "control_scale_list":[]
-        }
-    else:
-        model_config.controlnet_map["controlnet_openpose"] = {
-        "enable": True,
-        "use_preprocessor":True,
-        "guess_mode":False,
-        "controlnet_conditioning_scale": 1.0,
-        "control_guidance_start": 0.0,
-        "control_guidance_end": 1.0,
-        "control_scale_list":[]
-        }
+#    if not is_img2img:
+#        model_config.controlnet_map["controlnet_tile"] = {
+#        "enable": True,
+#        "use_preprocessor":True,
+#        "guess_mode":False,
+#        "controlnet_conditioning_scale": 1.0,
+#        "control_guidance_start": 0.0,
+#        "control_guidance_end": 1.0,
+#        "control_scale_list":[]
+#        }
+#    else:
+    model_config.controlnet_map["controlnet_openpose"] = {
+      "enable": True,
+      "use_preprocessor":True,
+      "guess_mode":False,
+      "controlnet_conditioning_scale": 1.0,
+      "control_guidance_start": 0.0,
+      "control_guidance_end": 1.0,
+      "control_scale_list":[]
+    }
 
 
     model_config.controlnet_map["controlnet_ip2p"] = {
-      "enable": True,
+#      "enable": True,
+      "enable": False,
       "use_preprocessor":True,
       "guess_mode":False,
       "controlnet_conditioning_scale": 0.5,
@@ -321,9 +326,10 @@ def create_config(
     }
 
     model_config.img2img_map = {
-        "enable": is_img2img,
+#        "enable": is_img2img,
+        "enable": True,
         "init_img_dir" : os.path.relpath(img2img_dir.absolute(), data_dir),
-        "save_init_image": True,
+        "save_init_image": False,
         "denoising_strength" : 0.7
     }
 
@@ -471,8 +477,8 @@ def generate(
     """Run video stylization"""
     from animatediff.cli import generate
 
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-
+#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    time_str = "jjj"
 
     config_org = stylize_dir.joinpath("prompt.json")
 
@@ -686,8 +692,8 @@ def interpolate(
 
     prepare_softsplat()
 
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-
+#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    time_str = "jjj"
     config_org = frame_dir.parent.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
@@ -955,8 +961,8 @@ def create_mask(
     if use_animeseg:
         prepare_anime_seg()
 
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-
+#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    time_str = "jjj"
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
@@ -1244,8 +1250,8 @@ def composite(
     if use_animeseg:
         prepare_anime_seg()
 
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-
+#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    time_str = "jjj"
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
@@ -1527,8 +1533,8 @@ def create_region(
     if use_animeseg:
         prepare_anime_seg()
 
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-
+#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    time_str = "jjj"
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
