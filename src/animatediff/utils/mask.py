@@ -341,10 +341,12 @@ def load_frame_list(frame_dir, frame_array_list, crop_info):
 def create_fg(mask_token, frame_dir, output_dir, output_mask_dir, masked_area_list,
               box_threshold=0.3,
               text_threshold=0.25,
-              bg_color=(0,255,0),
+              bg_color=(255,255,255),
+#              bg_color=(0,255,0),
               mask_padding=0,
               groundingdino_config="config/GroundingDINO/GroundingDINO_SwinB_cfg.py",
               groundingdino_checkpoint="data/models/GroundingDINO/groundingdino_swinb_cogcoor.pth",
+#              groundingdino_checkpoint="data/models/GroundingDINO/groundingdino_swinb_cogcoor.pth",
               sam_checkpoint="data/models/SAM/sam_hq_vit_l.pth",
               device="cuda",
               ):

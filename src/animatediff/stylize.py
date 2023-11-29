@@ -240,6 +240,8 @@ def create_config(
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart_anime"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_depth"), dirs_exist_ok=True)
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_scribble"), dirs_exist_ok=True)
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_normalbae"), dirs_exist_ok=True)
 
 #    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
 
@@ -318,7 +320,8 @@ def create_config(
     ip_adapter_dir.mkdir(parents=True, exist_ok=True)
 
     model_config.ip_adapter_map = {
-        "enable": True,
+#        "enable": True,
+        "enable": False,
         "input_image_dir": os.path.relpath(ip_adapter_dir.absolute(), data_dir),
         "prompt_fixed_ratio": 0.5,
         "save_input_image": True,
@@ -332,7 +335,7 @@ def create_config(
 
     model_config.img2img_map = {
 #        "enable": is_img2img,
-        "enable": True,
+        "enable": False,
         "init_img_dir" : os.path.relpath(img2img_dir.absolute(), data_dir),
         "save_init_image": False,
         "denoising_strength" : 0.7
@@ -1086,13 +1089,21 @@ def create_mask(
 
         logger.info(f"mask from [{mask_token}] are output to {fg_dir}")
 
-        if not is_img2img:
-            shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_tile", dirs_exist_ok=True)
-        else:
-            shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_openpose", dirs_exist_ok=True)
+#        if not is_img2img:
+#            shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_tile", dirs_exist_ok=True)
+#        else:
+#            shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_openpose", dirs_exist_ok=True)
 
         shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_ip2p", dirs_exist_ok=True)
 
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_tile", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_openpose", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_lineart_anime", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_lineart", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_depth", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_scribble", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_normalbae", dirs_exist_ok=True)
+        
         if crop_size_hw:
             if crop_size_hw[0] == 0 or crop_size_hw[1] == 0:
                 crop_size_hw = None
@@ -1137,17 +1148,21 @@ def create_mask(
 
     for output, size in output_list:
 
-        model_config.prompt_map = get_labels(
-            frame_dir= output / "00_img2img",
-            interval=predicte_interval,
-            general_threshold=general_threshold,
-            character_threshold=character_threshold,
-            ignore_tokens=black_list,
-            with_confidence=with_confidence,
-            is_danbooru_format=is_danbooru_format,
-            is_cpu = False,
-        )
+#        model_config.prompt_map = get_labels(
+#            frame_dir= output / "00_img2img",
+#            interval=predicte_interval,
+#            general_threshold=general_threshold,
+#            character_threshold=character_threshold,
+#            ignore_tokens=black_list,
+#            with_confidence=with_confidence,
+#            is_danbooru_format=is_danbooru_format,
+#            is_cpu = False,
+#        )
 
+        model_config.prompt_map = {
+           "0": "best quality"
+        }
+        
         model_config.controlnet_map["input_image_dir"] = os.path.relpath((output / "00_controlnet_image" ).absolute(), data_dir)
         model_config.img2img_map["init_img_dir"] = os.path.relpath((output / "00_img2img" ).absolute(), data_dir)
 
