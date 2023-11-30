@@ -706,18 +706,3 @@ def create_bg(frame_dir, output_dir, masked_area_list,
         cv2.imwrite(str(dst_img_path), f)
 
     sys.path.remove(repo_path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

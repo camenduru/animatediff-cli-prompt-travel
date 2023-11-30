@@ -572,14 +572,18 @@ def generate(
 
     torch.cuda.empty_cache()
     
-    try:
-        # フォルダが存在する場合のみ削除
-        shutil.rmtree(output_0_dir.parent / f"{time_str}_{0:02d}")
-        print(f"Output Folder deleted successfully.")
-    except FileNotFoundError:
-        print(f"Output Folder does not exist.")
-    except Exception as e:
-        print(f"Error occurred while deleting Output folder: {e}")
+#    try:
+#        # フォルダが存在する場合のみ削除
+#        shutil.rmtree(output_0_dir.parent / f"{time_str}_{0:02d}")
+#        print(f"Output Folder deleted successfully.")
+#    except FileNotFoundError:
+#        print(f"Output Folder does not exist.")
+#    except Exception as e:
+#        print(f"Error occurred while deleting Output folder: {e}")
+
+    original_video_path = model_config.stylize_config.get("original_video", {}).get("path", "")
+    # パスからファイル名部分を取得
+#    video_name = os.path.basename(original_video_path)
         
     output_0_dir = output_0_dir.rename(output_0_dir.parent / f"{time_str}_{0:02d}")
 
@@ -673,12 +677,12 @@ def generate(
 
     try:
         # フォルダが存在する場合のみ削除
-        shutil.rmtree(output_0_dir.parent / f"{time_str}_{1:02d}")
-        print(f"Output Folder deleted successfully.")
-    except FileNotFoundError:
-        print(f"Output Folder does not exist.")
-    except Exception as e:
-        print(f"Error occurred while deleting Output folder: {e}")
+ #       shutil.rmtree(output_0_dir.parent / f"{time_str}_{1:02d}")
+ #       print(f"Output Folder deleted successfully.")
+ #   except FileNotFoundError:
+ #       print(f"Output Folder does not exist.")
+ #   except Exception as e:
+ #       print(f"Error occurred while deleting Output folder: {e}")
     
     output_1_dir = output_1_dir.rename(output_1_dir.parent / f"{time_str}_{1:02d}")
 
@@ -1386,10 +1390,11 @@ def composite(
         output_dir = save_dir.joinpath(f"bg_{i:02d}_{time_str}")
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        if is_simple_composite:
-            simple_composite(bg_dir, fg_list, output_dir, mask_list)
-        else:
-            composite(bg_dir, fg_list, output_dir, mask_list)
+#        if is_simple_composite:
+#            simple_composite(bg_dir, fg_list, output_dir, mask_list)
+#        else:
+#            composite(bg_dir, fg_list, output_dir, mask_list)
+        jj_composite(bg_dir, fg_list, output_dir, mask_list)
 
         bg_dir = output_dir
 

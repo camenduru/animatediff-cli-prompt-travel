@@ -1360,7 +1360,7 @@ def save_output(
         output_fps = output_map["fps"] if "fps" in output_map else output_fps
         if output_format == "mp4":
             output_format = "h264"
-
+            
     if output_format == "gif":
         out_file = out_file.with_suffix(".gif")
         if no_frames is not True:
@@ -1395,6 +1395,20 @@ def save_output(
             lossless=False,
             param= output_map["encode_param"] if "encode_param" in output_map else {}
         )
+#        encoder = FfmpegEncoder(
+#            frames_dir=frame_dir,
+#            out_file=out_file,
+#            codec=output_format,
+#            codec='libx265',
+#            in_fps=output_fps,
+#            out_fps=output_fps,
+#            lossless=False,
+#            param={
+#                'pix_fmt': 'yuva420p',
+#                **(output_map.get("encode_param") or {}),
+#            }
+#        )
+
         logger.info("Encoding interpolated frames with ffmpeg...")
         result = encoder.encode()
         logger.debug(f"ffmpeg result: {result}")
