@@ -675,7 +675,7 @@ def generate(
         out_dir=stylize_dir
     )
 
-    try:
+ #   try:
         # フォルダが存在する場合のみ削除
  #       shutil.rmtree(output_0_dir.parent / f"{time_str}_{1:02d}")
  #       print(f"Output Folder deleted successfully.")
