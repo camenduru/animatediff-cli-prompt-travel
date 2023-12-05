@@ -7,6 +7,7 @@ import shutil
 import typer
 from animatediff.stylize import create_config, create_mask, generate
 from animatediff.cli import refine
+from animatediff.execute import execute
 
 execute: typer.Typer = typer.Typer(
     name="execute",
@@ -16,27 +17,41 @@ execute: typer.Typer = typer.Typer(
     help="execute video",
 )
 
+
 @execute.command(no_args_is_help=True)
 def execute(
+    videos: list = typer.Argument(..., help="List of video file paths"),
+    configs: list = typer.Argument(..., help="List of config file paths"),
+    urls: list = typer.Argument(..., help="List of URLs"),
+    delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
+    is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
+    is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
+):
+# @execute.command(no_args_is_help=True)
+# def execute(
+#     video: str = typer.Argument(..., help="Video file path"),
+#     config: str = typer.Argument(..., help="Config file path"),
+#     delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
+#     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
+#     is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
+# ):
+
+    if videos:
+        for video in videos:
+            for config in configs:
+                # execute関数を呼び出します
+                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
+    else:
+        print("未実装")
+
+
+def execute_impl(
     video: str = typer.Argument(..., help="Video file path"),
     config: str = typer.Argument(..., help="Config file path"),
     delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
     is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
 ):
-
-
-
-@execute.command(no_args_is_help=True)
-def execute(
-    video: str = typer.Argument(..., help="Video file path"),
-    config: str = typer.Argument(..., help="Config file path"),
-    delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
-    is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
-    is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
-):
-    #VideoNameの引数でそこからvideo_nameを取得するロジックをここに追加する
-    print("video name:", video)
 
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
@@ -57,12 +72,12 @@ def execute(
                 shutil.rmtree(stylize_dir)
             except Exception as e:
                 print(f"no folder exists")
-    create_config(
-        org_movie=video,
-        config_org=config,
-        fps=15,
-    )
-    create_mask(stylize_dir)
+        create_config(
+            org_movie=video,
+            config_org=config,
+            fps=15,
+        )
+        create_mask(stylize_dir)
 #    !animatediff stylize create-mask {stylize_dir}
 
     if is_test:
