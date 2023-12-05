@@ -219,6 +219,7 @@ def create_config(
     time_str = "jjj"
     # make the output directory
 #    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
+    org_movie = Path(org_movie)
     save_dir = out_dir.joinpath(f"{time_str}-{org_movie.stem}")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
@@ -994,6 +995,7 @@ def create_mask(
 
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     time_str = "jjj"
+    stylize_dir = Path(stylize_dir)
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
