@@ -489,7 +489,7 @@ def generate(
     singapore_timezone = pytz.timezone('Asia/Singapore')
     time_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-
+    stylize_dir = Path(stylize_dir)
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)

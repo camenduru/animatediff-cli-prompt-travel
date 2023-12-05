@@ -24,6 +24,17 @@ def execute(
     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
     is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
 ):
+
+
+
+@execute.command(no_args_is_help=True)
+def execute(
+    video: str = typer.Argument(..., help="Video file path"),
+    config: str = typer.Argument(..., help="Config file path"),
+    delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
+    is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
+    is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
+):
     #VideoNameの引数でそこからvideo_nameを取得するロジックをここに追加する
     print("video name:", video)
 
@@ -35,19 +46,17 @@ def execute(
     stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
     stylize_fg_dir = stylize_dir + '/fg_00_jjj'
     stylize_bf_dir = stylize_dir + '/bg_jjj'
-    path_to_check = Path(stylize_dir)
-
-    if path_to_check.exists() and not delete_if_exists:
+    stylize_dir = Path(stylize_dir)
+    config = Path(config)
+    if stylize_dir.exists() and not delete_if_exists:
         print(f"config already exists. skip create-config")
     else:
-        if path_to_check.exists() and delete_if_exists:
+        if stylize_dir.exists() and delete_if_exists:
             try:
                 print(f"Delete folder and create again")
                 shutil.rmtree(stylize_dir)
             except Exception as e:
                 print(f"no folder exists")
-#    !rm -r {stylize_dir}
-#    !animatediff stylize create-config {video} -c {con} -f 15
     create_config(
         org_movie=video,
         config_org=config,
@@ -65,7 +74,7 @@ def execute(
 
     if is_refine:
         result_dir = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
-        refine(out_dir=stylize_fg_dir, config_path=config, width=768)
+        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
 #        !animatediff refine {result_dir} -W 768
 
 def find_next_available_number(save_folder):
