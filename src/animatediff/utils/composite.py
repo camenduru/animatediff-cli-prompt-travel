@@ -13,7 +13,6 @@ from tqdm.rich import tqdm
 
 logger = logging.getLogger(__name__)
 
-
 #https://github.com/jinwonkim93/laplacian-pyramid-blend
 #https://blog.shikoan.com/pytorch-laplacian-pyramid/
 class LaplacianPyramidBlender:
@@ -200,40 +199,3 @@ def simple_composite(bg_dir, fg_list, output_dir, masked_area_list, device="cuda
 
 		img = Image.fromarray(img)
 		img.save(save_path)
-        
-def jj_composite(bg, fg, mask=None):
-    """
-    合成画像を作成するメソッド
-
-    Parameters:
-    - bg: 背景画像 (numpy array)
-    - fg: 前景画像 (numpy array)
-    - mask: マスク画像 (numpy array)、指定しない場合は None
-
-    Returns:
-    - 合成された画像 (numpy array)
-    """
-    # 背景画像のサイズを取得
-    h, w, _ = bg.shape
-
-    # 前景画像を背景画像のサイズにリサイズ
-    fg = cv2.resize(fg, dsize=(w, h))
-
-    if mask is None:
-        # マスクが指定されていない場合、前景画像からマスクを生成 (単純な輝度に基づく例)
-        gray_fg = cv2.cvtColor(fg, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(gray_fg, 1, 255, cv2.THRESH_BINARY)
-    else:
-        # マスクが指定されている場合、サイズを合わせる
-        mask = cv2.resize(mask, dsize=(w, h))
-
-    # マスクを正規化
-    mask = mask.astype(np.float32) / 255.0
-
-    # マスクを考慮したブレンディングを行う
-    blended_image = fg * mask + bg * (1 - mask)
-
-    # 画素値をクリッピングして uint8 に変換
-    blended_image = blended_image.clip(0, 255).astype(np.uint8)
-
-    return blended_image

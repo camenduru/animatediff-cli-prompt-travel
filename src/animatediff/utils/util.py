@@ -40,7 +40,7 @@ def process_images(input_folder, output_folder):
             output_path = os.path.join(output_folder, filename)
 
             remove_background(input_path, output_path)
-            print(f'Processed: {filename}')    
+            print(f'Processed: {filename}')
 
 def save_frames(video: Tensor, frames_dir: PathLike, show_progress:bool=True):
     frames_dir = Path(frames_dir)

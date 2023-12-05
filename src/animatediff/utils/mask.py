@@ -296,24 +296,21 @@ def restore_position(mask_list, crop_info):
     w = crop_info["width"]
     pos_map = crop_info["pos_map"]
 
-    for i in pos_map:
-        x,y = pos_map[i]
-        i = int(i)
-
+    for i in range(len(mask_list)):
+        x, y = pos_map.get(str(i), (0, 0))
         m = mask_list[i]
 
         if m is None:
             continue
 
-        m = cv2.resize( m, (w,h) )
+        m = cv2.resize(m, (w, h))
         if len(m.shape) == 2:
-            m = m[...,None]
+            m = m[..., None]
 
-        frame = np.zeros(shape=(f_h,f_w,m.shape[2]), dtype=np.uint8)
+        frame = np.zeros(shape=(f_h, f_w, m.shape[2]), dtype=np.uint8)
 
-        frame[y:y+h,x:x+w,...] = m
+        frame[y:y+h, x:x+w, ...] = m
         mask_list[i] = frame
-
 
     return mask_list
 

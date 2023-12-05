@@ -1390,14 +1390,14 @@ def composite(
         output_dir = save_dir.joinpath(f"bg_{i:02d}_{time_str}")
         output_dir.mkdir(parents=True, exist_ok=True)
 
-#        if is_simple_composite:
-#            simple_composite(bg_dir, fg_list, output_dir, mask_list)
-#        else:
-#            composite(bg_dir, fg_list, output_dir, mask_list)
-        jj_composite(bg_dir, fg_list, output_dir, mask_list)
+  #      if is_simple_composite:
+        print("do simple composite")
+        simple_composite(bg_dir, fg_list, output_dir, mask_list)
+ #       else:
+#            print("std composite")
+    #        composite(bg_dir, fg_list, output_dir, mask_list)
 
         bg_dir = output_dir
-
 
     from animatediff.generate import save_output
 

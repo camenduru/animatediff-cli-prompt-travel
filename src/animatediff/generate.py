@@ -72,6 +72,7 @@ controlnet_address_table={
     "qr_code_monster_v1" : ['monster-labs/control_v1p_sd15_qrcode_monster'],
     "qr_code_monster_v2" : ['monster-labs/control_v1p_sd15_qrcode_monster', 'v2'],
     "controlnet_mediapipe_face" : ['CrucibleAI/ControlNetMediaPipeFace', "diffusion_sd15"],
+    "controlnet_special" : ['crishhh/animatediff_controlnet'],
 }
 
 # Edit this table if you want to change to another controlnet checkpoint
