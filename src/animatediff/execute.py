@@ -4,15 +4,16 @@ from pathlib import Path
 import json
 import yt_dlp
 import shutil
+import typer
 from animatediff.stylize import create_config, create_mask, generate
 from animatediff.cli import refine
 
-auto: typer.Typer = typer.Typer(
-    name="stylize",
+execute: typer.Typer = typer.Typer(
+    name="execute",
     context_settings=dict(help_option_names=["-h", "--help"]),
     rich_markup_mode="rich",
     pretty_exceptions_show_locals=False,
-    help="stylize video",
+    help="execute video",
 )
 
 @execute.command(no_args_is_help=True)
@@ -21,7 +22,7 @@ def execute(
     config: str = typer.Argument(..., help="Config file path"),
     delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
-    is_refinewo: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
+    is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
 ):
     #VideoNameの引数でそこからvideo_nameを取得するロジックをここに追加する
     print("video name:", video)
@@ -35,24 +36,25 @@ def execute(
     stylize_fg_dir = stylize_dir + '/fg_00_jjj'
     stylize_bf_dir = stylize_dir + '/bg_jjj'
     path_to_check = Path(stylize_dir)
-    
-    if path_to_check.exists() and not deleteIfExists:
+
+    if path_to_check.exists() and not delete_if_exists:
         print(f"config already exists. skip create-config")
-    else: path_to_check.exists() and deleteIfExists:
-        try:
-            print(f"Delete folder and create again")
-            shutil.rmtree(directory_path)
-        except Exception as e:
-            print(f"no folder exists")
-#        !rm -r {stylize_dir}
-#        !animatediff stylize create-config {video} -c {con} -f 15
-        create_config(
-            org_movie=video,
-            config_org=con,
-            fps=15,
-        )
-        create_mask(stylize_dir)
-#        !animatediff stylize create-mask {stylize_dir} 
+    else:
+        if path_to_check.exists() and delete_if_exists:
+            try:
+                print(f"Delete folder and create again")
+                shutil.rmtree(stylize_dir)
+            except Exception as e:
+                print(f"no folder exists")
+#    !rm -r {stylize_dir}
+#    !animatediff stylize create-config {video} -c {con} -f 15
+    create_config(
+        org_movie=video,
+        config_org=config,
+        fps=15,
+    )
+    create_mask(stylize_dir)
+#    !animatediff stylize create-mask {stylize_dir}
 
     if is_test:
         generate(stylize_dir=stylize_fg_dir, length=16)
@@ -63,8 +65,8 @@ def execute(
 
     if is_refine:
         result_dir = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
-        refine(out_dir=stylize_fg_dir, config_path=config_path, width=768)
-#        !animatediff refine {result_dir} -W 768  
+        refine(out_dir=stylize_fg_dir, config_path=config, width=768)
+#        !animatediff refine {result_dir} -W 768
 
 def find_next_available_number(save_folder):
     existing_files = [f for f in os.listdir(save_folder) if f.startswith('dance') and f.endswith('.mp4')]
@@ -137,20 +139,20 @@ def load_video_name(url, video_name):
             json.dump(data, file, ensure_ascii=False, indent=2)
         return new_video_name
 
-if videos:
-    for video in videos:
-        for con in configs:
-            try:
-                exec_video(video, con)
-            except:
-                print("An exception occurred")
-else:
-    save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
-    saved_files = download_videos(video_urls,save_folder)
-    for saved_file in saved_files:
-        print(saved_file)
-        for con in configs:
-            try:
-                exec_video(saved_file, con)
-            except:
-                print("An exception occurred")
+# if videos:
+#     for video in videos:
+#         for con in configs:
+#             try:
+#                 exec_video(video, con)
+#             except:
+#                 print("An exception occurred")
+# else:
+#     save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
+#     saved_files = download_videos(video_urls,save_folder)
+#     for saved_file in saved_files:
+#         print(saved_file)
+#         for con in configs:
+#             try:
+#                 exec_video(saved_file, con)
+#             except:
+#                 print("An exception occurred")

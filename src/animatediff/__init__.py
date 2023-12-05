@@ -64,4 +64,6 @@ __all__ = [
     "generate",
     "schedulers",
     "settings",
+    "stylize",
+    "execute",
 ]
