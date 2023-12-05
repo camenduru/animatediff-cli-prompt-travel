@@ -7,7 +7,6 @@ import shutil
 import typer
 from animatediff.stylize import create_config, create_mask, generate
 from animatediff.cli import refine
-from animatediff.execute import execute
 
 execute: typer.Typer = typer.Typer(
     name="execute",
@@ -39,30 +38,33 @@ def execute(
     if videos:
         for video in videos:
             for config in configs:
-                # execute関数を呼び出します
                 execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
     else:
-        print("未実装")
-
+        save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
+        saved_files = download_videos(video_urls,save_folder)
+        for saved_file in saved_files:
+            print(saved_file)
+            for config in configs:
+                config=Path(config)
+                execute_impl(video=saved_file, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
 
 def execute_impl(
-    video: str = typer.Argument(..., help="Video file path"),
-    config: str = typer.Argument(..., help="Config file path"),
-    delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
-    is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
-    is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
+    video: str, config: str, delete_if_exists: bool, is_test: bool,is_refine: bool,
 ):
 
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
+    if config.startswith("/notebooks"):
+        config = config[len("/notebooks"):]    
 
     video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
 
     stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
     stylize_fg_dir = stylize_dir + '/fg_00_jjj'
-    stylize_bf_dir = stylize_dir + '/bg_jjj'
+    stylize_fg_dir = Path(stylize_fg_dir)
+    stylize_bg_dir = stylize_dir + '/bg_jjj'
+    stylize_bg_dir = Path(stylize_bg_dir)
     stylize_dir = Path(stylize_dir)
-    config = Path(config)
     if stylize_dir.exists() and not delete_if_exists:
         print(f"config already exists. skip create-config")
     else:
@@ -72,12 +74,12 @@ def execute_impl(
                 shutil.rmtree(stylize_dir)
             except Exception as e:
                 print(f"no folder exists")
-        create_config(
-            org_movie=video,
-            config_org=config,
-            fps=15,
-        )
-        create_mask(stylize_dir)
+            create_config(
+                org_movie=video,
+                config_org=config,
+                fps=15,
+            )
+            create_mask(stylize_dir)
 #    !animatediff stylize create-mask {stylize_dir}
 
     if is_test:
@@ -88,6 +90,7 @@ def execute_impl(
 #        !animatediff stylize generate {stylize_fg_dir}
 
     if is_refine:
+        config = Path(config)
         result_dir = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
         refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
 #        !animatediff refine {result_dir} -W 768
