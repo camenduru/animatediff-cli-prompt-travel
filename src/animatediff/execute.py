@@ -41,21 +41,18 @@ def execute(
                 execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
     else:
         save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
-        saved_files = download_videos(video_urls,save_folder)
+        saved_files = download_videos(urls,save_folder)
         for saved_file in saved_files:
-            print(saved_file)
             for config in configs:
                 config=Path(config)
                 execute_impl(video=saved_file, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
 
-def execute_impl(
-    video: str, config: str, delete_if_exists: bool, is_test: bool,is_refine: bool,
-):
+def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,is_refine: bool):
 
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
     if config.startswith("/notebooks"):
-        config = config[len("/notebooks"):]    
+        config = config[len("/notebooks"):]
 
     video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
 
@@ -68,18 +65,17 @@ def execute_impl(
     if stylize_dir.exists() and not delete_if_exists:
         print(f"config already exists. skip create-config")
     else:
-        if stylize_dir.exists() and delete_if_exists:
-            try:
-                print(f"Delete folder and create again")
-                shutil.rmtree(stylize_dir)
-            except Exception as e:
-                print(f"no folder exists")
-            create_config(
-                org_movie=video,
-                config_org=config,
-                fps=15,
-            )
-            create_mask(stylize_dir)
+        try:
+            print(f"Delete folder and create again")
+            shutil.rmtree(stylize_dir)
+        except Exception as e:
+            print(f"no folder exists")
+        create_config(
+            org_movie=video,
+            config_org=config,
+            fps=15,
+        )
+        create_mask(stylize_dir)
 #    !animatediff stylize create-mask {stylize_dir}
 
     if is_test:
@@ -111,6 +107,7 @@ def download_videos(video_urls, save_folder):
         'outtmpl': os.path.join(save_folder, f'{v_name}.%(ext)s'),
     }
     saved_file_paths = []
+    next_available_number = 0
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         for video_url in video_urls:
             result = ydl.extract_info(video_url, download=True)
@@ -146,8 +143,8 @@ def get_first_matching_folder(base_folder):
     first_matching_folder = matching_folders[0] if matching_folders else None
     return first_matching_folder
 
-def load_video_name(url, video_name):
-    folder_path = '/config/'
+def load_video_name(url):
+    folder_path = './config/'
     file_path = os.path.join(folder_path, 'video_url.json')
     if not os.path.exists(file_path):
         data = []
