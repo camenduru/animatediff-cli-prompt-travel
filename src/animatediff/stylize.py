@@ -216,7 +216,8 @@ def create_config(
 
     # get a timestamp for the output directory
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    time_str = "jjj"
+#    time_str = "jjj"
+    time_str = model_config.name
     # make the output directory
 #    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
     org_movie = Path(org_movie)
@@ -493,7 +494,6 @@ def generate(
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
-
     if length == -1:
         length = model_config.stylize_config["0"]["length"]
 
@@ -725,10 +725,11 @@ def interpolate(
     prepare_softsplat()
 
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    time_str = "jjj"
+#    time_str = "jjj"
     config_org = frame_dir.parent.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
+    time_str = model_config.name
 
     if "original_video" in model_config.stylize_config:
         org_video = Path(model_config.stylize_config["original_video"]["path"])
@@ -823,6 +824,16 @@ def create_mask(
             path_type=Path,
             file_okay=False,
             help="Path to source frames directory. default is 'STYLIZE_DIR/00_img2img'",
+        ),
+    ] = None,
+    bg_config: Annotated[
+        Path,
+        typer.Option(
+            "--frame_dir",
+            "-f",
+            path_type=Path,
+            file_okay=False,
+            help="Path of bg prompt.json",
         ),
     ] = None,
     box_threshold: Annotated[
@@ -994,12 +1005,15 @@ def create_mask(
         prepare_anime_seg()
 
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    time_str = "jjj"
+#    time_str = "jjj"
     stylize_dir = Path(stylize_dir)
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
+    time_str = model_config.name
 
+    bg_model_config: ModelConfig = get_model_config(bg_config)
+    
     if frame_dir is None:
         frame_dir = stylize_dir / "00_img2img"
 
@@ -1192,13 +1206,21 @@ def create_mask(
                 model_config.stylize_config["1"]["width"]=int(width * 1.25 //8*8)
                 model_config.stylize_config["1"]["height"]=int(height * 1.25 //8*8)
 
-
-
         save_config_path = output.joinpath("prompt.json")
+        if output == bg_dir:
+            model_config.path = bg_model_config.path
+            model_config.seed = bg_model_config.seed
+            model_config.scheduler = bg_model_config.scheduler
+            model_config.steps = bg_model_config.steps
+            model_config.guidance_scale = bg_model_config.guidance_scale
+            model_config.head_prompt = bg_model_config.head_prompt
+            model_config.prompt_map = bg_model_config.prompt_map
+            model_config.tail_prompt = bg_model_config.tail_prompt
+            model_config.n_prompt = bg_model_config.n_prompt
+            model_config.lora_map = bg_model_config.lora_map
+            print("updated BG config")
+
         save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
-
-
-
 
 @stylize.command(no_args_is_help=True)
 def composite(
@@ -1296,10 +1318,11 @@ def composite(
         prepare_anime_seg()
 
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    time_str = "jjj"
+#    time_str = "jjj"
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
+    time_str = model_config.name
 
 
     composite_config = {}
@@ -1580,10 +1603,11 @@ def create_region(
         prepare_anime_seg()
 
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    time_str = "jjj"
+#    time_str = "jjj"
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
+    time_str = model_config.name
 
     if frame_dir is None:
         frame_dir = stylize_dir / "00_img2img"

@@ -44,21 +44,29 @@ def process_images(input_folder, output_folder):
 
 def save_frames(video: Tensor, frames_dir: PathLike, show_progress:bool=True):
     frames_dir = Path(frames_dir)
-    
-    input_dir = frames_dir.with_name(frames_dir.name + "_bg")    
-    input_dir.mkdir(parents=True, exist_ok=True)
-
     frames_dir.mkdir(parents=True, exist_ok=True)
     frames = rearrange(video, "b c t h w -> t b c h w")
-
     if show_progress:
-        for idx, frame in enumerate(tqdm(frames, desc=f"Saving frames to {input_dir.stem}")):
-            save_image(frame, input_dir.joinpath(f"{idx:08d}.png"))
+        for idx, frame in enumerate(tqdm(frames, desc=f"Saving frames to {frames_dir.stem}")):
+            save_image(frame, frames_dir.joinpath(f"{idx:08d}.png"))
     else:
         for idx, frame in enumerate(frames):
-            save_image(frame, input_dir.joinpath(f"{idx:08d}.png"))
+            save_image(frame, frames_dir.joinpath(f"{idx:08d}.png"))
 
-    process_images(str(input_dir), str(frames_dir))
+#     input_dir = frames_dir.with_name(frames_dir.name + "_bg")    
+#     input_dir.mkdir(parents=True, exist_ok=True)
+
+#     frames_dir.mkdir(parents=True, exist_ok=True)
+#     frames = rearrange(video, "b c t h w -> t b c h w")
+
+#     if show_progress:
+#         for idx, frame in enumerate(tqdm(frames, desc=f"Saving frames to {input_dir.stem}")):
+#             save_image(frame, input_dir.joinpath(f"{idx:08d}.png"))
+#     else:
+#         for idx, frame in enumerate(frames):
+#             save_image(frame, input_dir.joinpath(f"{idx:08d}.png"))
+
+#     process_images(str(input_dir), str(frames_dir))
 
 def save_imgs(imgs:List[Image.Image], frames_dir: PathLike):
     frames_dir = Path(frames_dir)

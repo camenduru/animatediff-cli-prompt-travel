@@ -1084,11 +1084,9 @@ def refine(
     time_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     # make the output directory
-    original_video_path = model_config.stylize_config.get("original_video", {}).get("path", "")
-    # パスからファイル名部分を取得
-    video_name = os.path.basename(original_video_path)
+    p_name = model_config.name
     
-    save_dir = out_dir.joinpath(f"{time_str}-{video_name}")
+    save_dir = out_dir.joinpath(f"{time_str}-{p_name}")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
