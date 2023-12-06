@@ -26,25 +26,15 @@ def execute(
     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
     is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
 ):
-# @execute.command(no_args_is_help=True)
-# def execute(
-#     video: str = typer.Argument(..., help="Video file path"),
-#     config: str = typer.Argument(..., help="Config file path"),
-#     delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
-#     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
-#     is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
-# ):
-
     if videos:
         for video in videos:
             for config in configs:
                 execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
     else:
-        save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
+        save_folder = './data/video'
         saved_files = download_videos(urls,save_folder)
         for saved_file in saved_files:
             for config in configs:
-                config=Path(config)
                 execute_impl(video=saved_file, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
 
 def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,is_refine: bool):
@@ -56,7 +46,8 @@ def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,
 
     video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
 
-    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
+#    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
+    stylize_dir='./stylize/jjj-' + video_name
     stylize_fg_dir = stylize_dir + '/fg_00_jjj'
     stylize_fg_dir = Path(stylize_fg_dir)
     stylize_bg_dir = stylize_dir + '/bg_jjj'
@@ -65,11 +56,9 @@ def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,
     if stylize_dir.exists() and not delete_if_exists:
         print(f"config already exists. skip create-config")
     else:
-        try:
+        if stylize_dir.exists():
             print(f"Delete folder and create again")
             shutil.rmtree(stylize_dir)
-        except Exception as e:
-            print(f"no folder exists")
         create_config(
             org_movie=video,
             config_org=config,
@@ -101,15 +90,13 @@ def find_next_available_number(save_folder):
         return 1
 
 def download_videos(video_urls, save_folder):
-#    next_available_number = find_next_available_number(save_folder)
-    v_name = load_video_name(video_urls)
-    ydl_opts = {
-        'outtmpl': os.path.join(save_folder, f'{v_name}.%(ext)s'),
-    }
     saved_file_paths = []
-    next_available_number = 0
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         for video_url in video_urls:
+            v_name = load_video_name(video_url)
+            ydl_opts = {
+                'outtmpl': os.path.join(save_folder, f'{v_name}.%(ext)s'),
+            }
             result = ydl.extract_info(video_url, download=True)
             if 'entries' in result:
                 for entry in result['entries']:
@@ -118,17 +105,36 @@ def download_videos(video_urls, save_folder):
                     else:
                         # Alternative approach to determine file name
                         file_extension = entry.get('ext', 'mp4')
-                        saved_file_paths.append(os.path.join(save_folder, f'dance{next_available_number:05d}.{file_extension}'))
-                    next_available_number += 1
+                        saved_file_paths.append(os.path.join(save_folder, f'{v_name}.{file_extension}'))
             else:
                 if 'filename' in result:
                     saved_file_paths.append(result['filename'])
                 else:
                     # Alternative approach to determine file name
                     file_extension = result.get('ext', 'mp4')
-                    saved_file_paths.append(os.path.join(save_folder, f'dance{next_available_number:05d}.{file_extension}'))
-                    next_available_number += 1
+                    saved_file_paths.append(os.path.join(save_folder, f'{v_name}.{file_extension}'))
     return saved_file_paths
+
+def load_video_name(url):
+    folder_path = './config/'
+    file_path = os.path.join(folder_path, 'video_url.json')
+    if not os.path.exists(file_path):
+        data = []
+    else:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+
+    existing_entry = next((entry for entry in data if entry['url'] == url), None)
+    if existing_entry:
+        return existing_entry['video_name']
+    else:
+        count = len(data) + 1
+        new_video_name = f'dance{count:05d}'
+        new_entry = {'url': url, 'video_name': new_video_name}
+        data.append(new_entry)
+        with open(file_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file, ensure_ascii=False, indent=2)
+        return new_video_name
 
 def get_last_sorted_subfolder(base_folder):
     subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
@@ -142,41 +148,3 @@ def get_first_matching_folder(base_folder):
     matching_folders = [folder for folder in all_folders if pattern.match(os.path.basename(folder))]
     first_matching_folder = matching_folders[0] if matching_folders else None
     return first_matching_folder
-
-def load_video_name(url):
-    folder_path = './config/'
-    file_path = os.path.join(folder_path, 'video_url.json')
-    if not os.path.exists(file_path):
-        data = []
-    else:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-    existing_entry = next((entry for entry in data if entry['url'] == url), None)
-    if existing_entry:
-        return existing_entry['video_name']
-    else:
-        count = len(data) + 1
-        new_video_name = f'dance{count:05d}'
-        new_entry = {'url': url, 'video_name': new_video_name}
-        data.append(new_entry)
-        with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(data, file, ensure_ascii=False, indent=2)
-        return new_video_name
-
-# if videos:
-#     for video in videos:
-#         for con in configs:
-#             try:
-#                 exec_video(video, con)
-#             except:
-#                 print("An exception occurred")
-# else:
-#     save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
-#     saved_files = download_videos(video_urls,save_folder)
-#     for saved_file in saved_files:
-#         print(saved_file)
-#         for con in configs:
-#             try:
-#                 exec_video(saved_file, con)
-#             except:
-#                 print("An exception occurred")
