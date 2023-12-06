@@ -37,7 +37,7 @@ from animatediff.pipelines import AnimationPipeline, load_text_embeddings
 from animatediff.pipelines.lora import load_lcm_lora, load_lora_map
 from animatediff.pipelines.pipeline_controlnet_img2img_reference import \
     StableDiffusionControlNetImg2ImgReferencePipeline
-from animatediff.schedulers import get_scheduler
+from animatediff.schedulers import DiffusionScheduler, get_scheduler
 from animatediff.settings import InferenceConfig, ModelConfig
 from animatediff.utils.control_net_lllite import (ControlNetLLLite,
                                                   load_controlnet_lllite)
@@ -49,7 +49,8 @@ from animatediff.utils.model import (ensure_motion_modules,
 from animatediff.utils.util import (get_resized_image, get_resized_image2,
                                     get_resized_images,
                                     get_tensor_interpolation_method,
-                                    prepare_dwpose, prepare_ip_adapter,
+                                    prepare_dwpose, prepare_extra_controlnet,
+                                    prepare_ip_adapter,
                                     prepare_ip_adapter_sdxl, prepare_lcm_lora,
                                     prepare_lllite, prepare_motion_module,
                                     save_frames, save_imgs, save_video)
@@ -72,7 +73,7 @@ controlnet_address_table={
     "qr_code_monster_v1" : ['monster-labs/control_v1p_sd15_qrcode_monster'],
     "qr_code_monster_v2" : ['monster-labs/control_v1p_sd15_qrcode_monster', 'v2'],
     "controlnet_mediapipe_face" : ['CrucibleAI/ControlNetMediaPipeFace', "diffusion_sd15"],
-    "controlnet_special" : ['crishhh/animatediff_controlnet'],
+    "animatediff_controlnet" : [None, "data/models/controlnet/animatediff_controlnet/controlnet_checkpoint.ckpt"]
 }
 
 # Edit this table if you want to change to another controlnet checkpoint
@@ -287,17 +288,47 @@ def is_valid_controlnet_type(type_str, is_sdxl):
     else:
         return (type_str in controlnet_address_table_sdxl) or (type_str in lllite_address_table_sdxl)
 
+def load_controlnet_from_file(file_path, torch_dtype):
+    from safetensors.torch import load_file
 
+    prepare_extra_controlnet()
 
+    file_path = Path(file_path)
+
+    if file_path.exists() and file_path.is_file():
+        if file_path.suffix.lower() in [".pth", ".pt", ".ckpt"]:
+            controlnet_state_dict = torch.load(file_path, map_location="cpu", weights_only=True)
+        elif file_path.suffix.lower() == ".safetensors":
+            controlnet_state_dict = load_file(file_path, device="cpu")
+        else:
+            raise RuntimeError(
+                f"unknown file format for controlnet weights: {file_path.suffix}"
+            )
+    else:
+        raise FileNotFoundError(f"no controlnet weights found in {file_path}")
+
+    if file_path.parent.name == "animatediff_controlnet":
+        model = ControlNetModel(cross_attention_dim=768)
+    else:
+        model = ControlNetModel()
+
+    missing, _ = model.load_state_dict(controlnet_state_dict["state_dict"], strict=False)
+    if len(missing) > 0:
+        logger.info(f"ControlNetModel has missing keys: {missing}")
+
+    return model.to(dtype=torch_dtype)
 
 def create_controlnet_model(pipe, type_str, is_sdxl):
     if not is_sdxl:
         if type_str in controlnet_address_table:
             addr = controlnet_address_table[type_str]
-            if len(addr) == 1:
-                return ControlNetModel.from_pretrained(addr[0], torch_dtype=torch.float16)
+            if addr[0] != None:
+                if len(addr) == 1:
+                    return ControlNetModel.from_pretrained(addr[0], torch_dtype=torch.float16)
+                else:
+                    return ControlNetModel.from_pretrained(addr[0], subfolder=addr[1], torch_dtype=torch.float16)
             else:
-                return ControlNetModel.from_pretrained(addr[0], subfolder=addr[1], torch_dtype=torch.float16)
+                return load_controlnet_from_file(addr[1],torch_dtype=torch.float16)
         else:
             raise ValueError(f"unknown controlnet type {type_str}")
     else:
@@ -437,6 +468,16 @@ def create_pipeline_sdxl(
     sched_kwargs = infer_config.noise_scheduler_kwargs
     scheduler = get_scheduler(model_config.scheduler, sched_kwargs)
     logger.info(f'Using scheduler "{model_config.scheduler}" ({scheduler.__class__.__name__})')
+
+    if model_config.gradual_latent_hires_fix_map:
+        if "enable" in model_config.gradual_latent_hires_fix_map:
+            if model_config.gradual_latent_hires_fix_map["enable"]:
+                if model_config.scheduler not in (DiffusionScheduler.euler_a, DiffusionScheduler.lcm):
+                    logger.warn("gradual_latent_hires_fix enable")
+                    logger.warn(f"{model_config.scheduler=}")
+                    logger.warn("If you are forced to exit with an error, change to euler_a or lcm")
+
+
 
     # Load the checkpoint weights into the pipeline
     if model_config.path is not None:
@@ -608,6 +649,14 @@ def create_pipeline(
     feature_extractor = CLIPImageProcessor.from_pretrained(base_model, subfolder="feature_extractor")
 
     # set up scheduler
+    if model_config.gradual_latent_hires_fix_map:
+        if "enable" in model_config.gradual_latent_hires_fix_map:
+            if model_config.gradual_latent_hires_fix_map["enable"]:
+                if model_config.scheduler not in (DiffusionScheduler.euler_a, DiffusionScheduler.lcm):
+                    logger.warn("gradual_latent_hires_fix enable")
+                    logger.warn(f"{model_config.scheduler=}")
+                    logger.warn("If you are forced to exit with an error, change to euler_a or lcm")
+
     sched_kwargs = infer_config.noise_scheduler_kwargs
     scheduler = get_scheduler(model_config.scheduler, sched_kwargs)
     logger.info(f'Using scheduler "{model_config.scheduler}" ({scheduler.__class__.__name__})')
@@ -1361,7 +1410,7 @@ def save_output(
         output_fps = output_map["fps"] if "fps" in output_map else output_fps
         if output_format == "mp4":
             output_format = "h264"
-            
+
     if output_format == "gif":
         out_file = out_file.with_suffix(".gif")
         if no_frames is not True:
@@ -1446,6 +1495,7 @@ def run_inference(
     is_single_prompt_mode: bool = False,
     is_sdxl:bool=False,
     apply_lcm_lora:bool=False,
+    gradual_latent_map: Dict[str,Any] = None,
 ):
     out_dir = Path(out_dir)  # ensure out_dir is a Path
 
@@ -1505,6 +1555,7 @@ def run_inference(
         interpolation_factor=1,
         is_single_prompt_mode=is_single_prompt_mode,
         apply_lcm_lora=apply_lcm_lora,
+        gradual_latent_map=gradual_latent_map,
         callback=callback,
         callback_steps=output_map.get("preview_steps"),
     )
