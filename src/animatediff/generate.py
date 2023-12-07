@@ -988,6 +988,7 @@ def controlnet_preprocess(
                             "control_guidance_end" : item["control_guidance_end"],
                             "control_scale_list" : item["control_scale_list"],
                             "guess_mode" : item["guess_mode"] if "guess_mode" in item else False,
+                            "control_region_list" : item["control_region_list"] if "control_region_list" in item else []
                         }
 
                         use_preprocessor = item["use_preprocessor"] if "use_preprocessor" in item else True
@@ -1147,6 +1148,7 @@ def region_preprocess(
 
 
     region_condi_list=[]
+    region2index={}
 
     condi_index = 0
 
@@ -1190,6 +1192,7 @@ def region_preprocess(
             "crop_generation_rate" : 0
         }
     ]
+    region2index["background"]=bg_src
 
     if model_config.region_map:
         for r in model_config.region_map:
@@ -1252,6 +1255,7 @@ def region_preprocess(
                     "crop_generation_rate" : model_config.region_map[r]["crop_generation_rate"] if "crop_generation_rate" in model_config.region_map[r] else 0
                 }
             )
+            region2index[r]=src
 
     ip_adapter_config_map = None
 
@@ -1277,7 +1281,7 @@ def region_preprocess(
     if not region_condi_list:
         raise ValueError("erro! There is not a single valid region")
 
-    return region_condi_list, region_list, ip_adapter_config_map
+    return region_condi_list, region_list, ip_adapter_config_map, region2index
 
 def img2img_preprocess(
         img2img_config_map: Dict[str, Any] = None,

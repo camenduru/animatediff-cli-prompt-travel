@@ -278,7 +278,7 @@ def create_config(
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_scribble"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_normalbae"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("animatediff_controlnet"), dirs_exist_ok=True)
-    
+
 #    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
 
     black_list = []
@@ -325,13 +325,14 @@ def create_config(
 #        }
 #    else:
     model_config.controlnet_map["controlnet_openpose"] = {
-      "enable": True,
-      "use_preprocessor":True,
-      "guess_mode":False,
-      "controlnet_conditioning_scale": 1.0,
-      "control_guidance_start": 0.0,
-      "control_guidance_end": 1.0,
-      "control_scale_list":[]
+        "enable": True,
+        "use_preprocessor":True,
+        "guess_mode":False,
+        "controlnet_conditioning_scale": 1.0,
+        "control_guidance_start": 0.0,
+        "control_guidance_end": 1.0,
+        "control_scale_list":[],
+        "control_region_list":[]
     }
 
 
@@ -343,7 +344,8 @@ def create_config(
       "controlnet_conditioning_scale": 0.5,
       "control_guidance_start": 0.0,
       "control_guidance_end": 1.0,
-      "control_scale_list":[]
+      "control_scale_list":[],
+      "control_region_list":[]
     }
 
     for m in model_config.controlnet_map:
