@@ -277,7 +277,8 @@ def create_config(
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_depth"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_scribble"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_normalbae"), dirs_exist_ok=True)
-
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("animatediff_controlnet"), dirs_exist_ok=True)
+    
 #    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
 
     black_list = []
@@ -1162,6 +1163,7 @@ def create_mask(
         shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_depth", dirs_exist_ok=True)
         shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_scribble", dirs_exist_ok=True)
         shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/controlnet_normalbae", dirs_exist_ok=True)
+        shutil.copytree(fg_masked_dir, fg_dir / "00_controlnet_image/animatediff_controlnet", dirs_exist_ok=True)
 
         if crop_size_hw:
             if crop_size_hw[0] == 0 or crop_size_hw[1] == 0:

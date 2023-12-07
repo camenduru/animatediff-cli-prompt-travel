@@ -32,7 +32,7 @@ def execute(
     if videos:
         for video in videos:
             for config in configs:
-                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine)
+                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
     else:
         save_folder = './data/video'
         saved_files = download_videos(urls,save_folder)
