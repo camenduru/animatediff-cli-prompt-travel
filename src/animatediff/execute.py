@@ -5,7 +5,7 @@ import json
 import yt_dlp
 import shutil
 import typer
-from animatediff.stylize import create_config, create_mask, generate
+from animatediff.stylize import create_config, create_mask, generate, composite
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.cli import refine
 
@@ -22,17 +22,18 @@ execute: typer.Typer = typer.Typer(
 def execute(
     videos: list = typer.Argument(..., help="List of video file paths"),
     configs: list = typer.Argument(..., help="List of config file paths"),
-    bg_config: str = typer.Argument(..., help="Background prompt.json file path"),
     urls: list = typer.Argument(..., help="List of URLs"),
     delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
-    is_refine: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
-    
+    is_refine: bool = typer.Option(False, "--is_refine", help="Run in refine mode"),
+    bg_config: str = typer.Option("NA", help="Background prompt.json file path"),    
+#    is_composite: bool = typer.Option(True, "--is_composite", help="Run in composite mode"),
+
 ):
     if videos:
         for video in videos:
             for config in configs:
-                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
+                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config, )
     else:
         save_folder = './data/video'
         saved_files = download_videos(urls,save_folder)
@@ -55,9 +56,10 @@ def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,
     config = Path(config)
     model_config: ModelConfig = get_model_config(config)
     p_name = model_config.name
-
-    bg_config = Path(bg_config)
-    bg_model_config: ModelConfig = get_model_config(bg_config)
+    
+    if not bg_config == 'NA':
+        bg_config = Path(bg_config)
+        bg_model_config: ModelConfig = get_model_config(bg_config)
     
 #    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
     stylize_dir='./stylize/' + p_name + '-' + video_name
@@ -77,22 +79,33 @@ def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,
             config_org=config,
             fps=15,
         )
-        create_mask(stylize_dir=stylize_dir, bg_config=bg_config)
-#    !animatediff stylize create-mask {stylize_dir}
+        create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
     if is_test:
         generate(stylize_dir=stylize_fg_dir, length=16)
-        generate(stylize_dir=stylize_bg_dir, length=16)
-
-#        !animatediff stylize generate {stylize_fg_dir} -L 16
+        if not bg_config == 'NA':
+            generate(stylize_dir=stylize_bg_dir, length=16)
     else:
         generate(stylize_dir=stylize_fg_dir)
-        generate(stylize_dir=stylize_bg_dir)
-#        !animatediff stylize generate {stylize_fg_dir}
+        if not bg_config == 'NA':
+            generate(stylize_dir=stylize_bg_dir)
 
     if is_refine:
         result_dir = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
         refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
 #        !animatediff refine {result_dir} -W 768
+
+    fg_result = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
+    bg_result = get_first_matching_folder(get_last_sorted_subfolder(stylize_bg_dir))
+
+    if not bg_config == 'NA':
+        composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
+    else:
+        composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
+    print(f"fg_フォルダ: {fg_result}")
+    if not bg_config == 'NA':
+        print(f"bg_フォルダ: {bg_result}")
+    else:
+        print(f"bg_フォルダ: {stylize_bg_dir/'00_img2img'}")
 
 def find_next_available_number(save_folder):
     existing_files = [f for f in os.listdir(save_folder) if f.startswith('dance') and f.endswith('.mp4')]
@@ -159,6 +172,20 @@ def get_last_sorted_subfolder(base_folder):
     return last_sorted_subfolder
 
 def get_first_matching_folder(base_folder):
+    all_folders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
+    pattern = re.compile(r'\d{2}-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}')
+    matching_folders = [folder for folder in all_folders if pattern.match(os.path.basename(folder))]
+    first_matching_folder = matching_folders[0] if matching_folders else None
+    return first_matching_folder
+
+def get_first_matching_folder2(base_folder):
+    all_folders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
+    pattern = re.compile(r'\d{2}-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}')
+    matching_folders = [folder for folder in all_folders if pattern.match(os.path.basename(folder))]
+    first_matching_folder = matching_folders[0] if matching_folders else None
+    return first_matching_folder
+
+def get_first_matching_refine_folder(base_folder):
     all_folders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
     pattern = re.compile(r'\d{2}-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}')
     matching_folders = [folder for folder in all_folders if pattern.match(os.path.basename(folder))]

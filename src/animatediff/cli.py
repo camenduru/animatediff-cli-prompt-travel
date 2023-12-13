@@ -342,9 +342,11 @@ def generate(
     base_model_path: Path = get_base_model(model_name_or_path, local_dir=get_dir("data/models/huggingface"), is_sdxl=is_sdxl)
 
     # get a timestamp for the output directory
-    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    singapore_timezone = pytz.timezone('Asia/Singapore')
+    time_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
     # make the output directory
-    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
+#    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
+    save_dir = out_dir.joinpath(f"{time_str}-88")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
@@ -1092,7 +1094,7 @@ def refine(
     # make the output directory
     p_name = model_config.name
     
-    save_dir = out_dir.joinpath(f"{time_str}-{p_name}")
+    save_dir = out_dir.joinpath(f"{time_str}-99")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 

@@ -877,8 +877,8 @@ def create_mask(
     bg_config: Annotated[
         Path,
         typer.Option(
-            "--frame_dir",
-            "-f",
+            "--bg_config",
+            "-bc",
             path_type=Path,
             file_okay=False,
             help="Path of bg prompt.json",
@@ -1059,8 +1059,8 @@ def create_mask(
 
     model_config: ModelConfig = get_model_config(config_org)
     time_str = model_config.name
-
-    bg_model_config: ModelConfig = get_model_config(bg_config)
+    if not bg_config == 'NA':
+        bg_model_config: ModelConfig = get_model_config(bg_config)
 
     if frame_dir is None:
         frame_dir = stylize_dir / "00_img2img"
@@ -1247,7 +1247,7 @@ def create_mask(
                 model_config.stylize_config["1"]["height"]=int(height * 1.25 //8*8)
 
         save_config_path = output.joinpath("prompt.json")
-        if output == bg_dir:
+        if output == bg_dir and not bg_config == 'NA':
             model_config.path = bg_model_config.path
             model_config.seed = bg_model_config.seed
             model_config.scheduler = bg_model_config.scheduler
@@ -1255,9 +1255,11 @@ def create_mask(
             model_config.guidance_scale = bg_model_config.guidance_scale
             model_config.head_prompt = bg_model_config.head_prompt
             model_config.prompt_map = bg_model_config.prompt_map
+            model_config.lora_map = bg_model_config.lora_map
             model_config.tail_prompt = bg_model_config.tail_prompt
             model_config.n_prompt = bg_model_config.n_prompt
             model_config.lora_map = bg_model_config.lora_map
+            model_config.controlnet_map = bg_model_config.controlnet_map
             print("updated BG config")
 
         save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
@@ -1341,6 +1343,26 @@ def composite(
             rich_help_panel="composite",
         ),
     ] = False,
+    bg_dir: Annotated[
+        Path,
+        typer.Option(
+            "--bg_dir",
+            "-bg",
+            path_type=Path,
+            file_okay=False,
+            help="Path to bg frames directory. default is 'STYLIZE_DIR/00_img2img'",
+        ),
+    ] = None,
+    fg_dir: Annotated[
+        Path,
+        typer.Option(
+            "--fg_dir",
+            "-fg",
+            path_type=Path,
+            file_okay=False,
+            help="Path to fg frames directory. default is 'STYLIZE_DIR/fg_00_[model_name]/timestamp/00-timestamp'",
+        ),
+    ] = None,
 ):
     """composite FG and BG"""
 
@@ -1357,12 +1379,14 @@ def composite(
     if use_animeseg:
         prepare_anime_seg()
 
-#    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 #    time_str = "jjj"
+    singapore_timezone = pytz.timezone('Asia/Singapore')
+    time_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
+
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
-    time_str = model_config.name
+ #   time_str = model_config.name
 
 
     composite_config = {}
@@ -1377,15 +1401,19 @@ def composite(
     save_config_path = save_dir.joinpath("prompt.json")
     save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 
-
-    bg_dir = composite_config["bg_frame_dir"]
+    if not bg_dir:
+        bg_dir = composite_config["bg_frame_dir"]
     bg_dir = Path(bg_dir)
     if not bg_dir.is_dir():
         raise ValueError('model_config.stylize_config["composite"]["bg_frame_dir"] not valid')
 
     frame_len = len(sorted(glob.glob( os.path.join(bg_dir, "[0-9]*.png"), recursive=False)))
-
-    fg_list = composite_config["fg_list"]
+    if fg_dir:
+        fg_list = [{ "path": fg_dir,
+                    "mask_path": " absolute path to mask dir (this is optional) ",
+                    "mask_prompt": "person" }]
+    else:
+        fg_list = composite_config["fg_list"]
 
     for i, fg_param in enumerate(fg_list):
         mask_token = fg_param["mask_prompt"]
@@ -1471,7 +1499,9 @@ def composite(
     for f in frames:
         out_images.append(Image.open(f))
 
-    out_file = save_dir.joinpath(f"composite")
+    singapore_timezone = pytz.timezone('Asia/Singapore')
+    now = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M-%S")
+    out_file = save_dir.joinpath(f"composite{now}")
     save_output(out_images,bg_dir,out_file,model_config.output,True,save_frames=None,save_video=None)
 
     logger.info(f"output to {out_file}")
