@@ -350,7 +350,7 @@ def generate(
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
-    controlnet_image_map, controlnet_type_map, controlnet_ref_map = controlnet_preprocess(model_config.controlnet_map, width, height, length, save_dir, device, is_sdxl)
+    controlnet_image_map, controlnet_type_map, controlnet_ref_map, controlnet_no_shrink = controlnet_preprocess(model_config.controlnet_map, width, height, length, save_dir, device, is_sdxl)
     img2img_map = img2img_preprocess(model_config.img2img_map, width, height, length, save_dir)
 
     # beware the pipeline
@@ -407,10 +407,11 @@ def generate(
     is_init_img_exist = img2img_map != None
     region_condi_list, region_list, ip_adapter_config_map, region2index = region_preprocess(model_config, width, height, length, save_dir, is_init_img_exist, is_sdxl)
 
-    for c in controlnet_type_map:
-        tmp_r = [region2index[r] for r in controlnet_type_map[c]["control_region_list"]]
-        controlnet_type_map[c]["control_region_list"] = [r for r in tmp_r if r != -1]
-        logger.info(f"{c=} / {controlnet_type_map[c]['control_region_list']}")
+    if controlnet_type_map:
+        for c in controlnet_type_map:
+            tmp_r = [region2index[r] for r in controlnet_type_map[c]["control_region_list"]]
+            controlnet_type_map[c]["control_region_list"] = [r for r in tmp_r if r != -1]
+            logger.info(f"{c=} / {controlnet_type_map[c]['control_region_list']}")
 
     # save config to output directory
     logger.info("Saving prompt config to output directory")
@@ -453,6 +454,7 @@ def generate(
                 duration=length,
                 idx=gen_num,
                 out_dir=save_dir,
+                context_schedule=model_config.context_schedule,
                 context_frames=context,
                 context_overlap=overlap,
                 context_stride=stride,
@@ -461,6 +463,7 @@ def generate(
                 controlnet_image_map=controlnet_image_map,
                 controlnet_type_map=controlnet_type_map,
                 controlnet_ref_map=controlnet_ref_map,
+                controlnet_no_shrink=controlnet_no_shrink,
                 no_frames=no_frames,
                 img2img_map=img2img_map,
                 ip_adapter_config_map=ip_adapter_config_map,
