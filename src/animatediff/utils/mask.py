@@ -252,7 +252,7 @@ def crop_mask_list(mask_list):
 def crop_frames(pos_list, crop_size_hw, frame_dir):
     h,w = crop_size_hw
 
-    for i,pos in tqdm(enumerate(pos_list),total=len(pos_list)):
+    for i,pos in tqdm(enumerate(pos_list),total=len(pos_list), leave=True):
         filename = f"{i:08d}.png"
         frame_path = frame_dir / filename
         if not frame_path.is_file():
@@ -365,7 +365,7 @@ def create_fg(mask_token, frame_dir, output_dir, output_mask_dir, masked_area_li
             kernel = np.ones((abs(mask_padding),abs(mask_padding)),np.uint8)
         kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
-        for i, frame in tqdm(enumerate(frame_list),total=len(frame_list), desc=f"creating mask from {mask_token=}"):
+        for i, frame in tqdm(enumerate(frame_list),total=len(frame_list), desc=f"creating mask from {mask_token=}", leave=True):
             frame = Path(frame)
             file_name = frame.name
 
@@ -657,7 +657,7 @@ def create_bg(frame_dir, output_dir, masked_area_list,
         ref_num = -1
 
     # ---- feature propagation + transformer ----
-    for f in tqdm(range(0, video_length, neighbor_stride)):
+    for f in tqdm(range(0, video_length, neighbor_stride), leave=True):
         neighbor_ids = [
             i for i in range(max(0, f - neighbor_stride),
                                 min(video_length, f + neighbor_stride + 1))
