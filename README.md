@@ -8,6 +8,25 @@ It seems to work surprisingly well!
 
 ### Example
 
+- context_schedule "composite"
+- pros : more stable animation
+- cons : ignore prompts that require compositional changes
+- "uniform"(default) / "composite"
+
+<div><video controls src="https://github.com/s9roll7/animatediff-cli-prompt-travel/assets/118420657/717536f1-7c60-49a6-ad3a-de31d6b3efd9" muted="false"></video></div>
+<br>
+
+
+
+
+
+- controlnet for region
+- controlnet_openpose for fg
+- controlnet_tile(0.7) for bg
+<div><video controls src="https://github.com/s9roll7/animatediff-cli-prompt-travel/assets/118420657/09fbf348-42ed-425c-9ec0-2865d233203a" muted="false"></video></div>
+<br>
+
+
 - added new controlnet [animatediff-controlnet](https://www.reddit.com/r/StableDiffusion/comments/183gt1g/animation_with_animatediff_and_retrained/)
 - It works like ip2p and is very useful for replacing characters
 - (This sample is generated at high resolution using the gradual latent hires fix)
@@ -97,6 +116,7 @@ Almost same as the original animatediff-cli, but with a slight change in config 
   },
   "vae_path":"share/VAE/vae-ft-mse-840000-ema-pruned.ckpt",       # Specify vae as a path relative to /animatediff-cli/data
   "motion_module": "models/motion-module/mm_sd_v14.ckpt",         # Specify motion module as a path relative to /animatediff-cli/data
+  "context_schedule":"uniform",          # "uniform" or "composite"
   "compile": false,
   "seed": [
     341774366206100,-1,-1         # -1 means random. If "--repeats 3" is specified in this setting, The first will be 341774366206100, the second and third will be random.
@@ -210,11 +230,19 @@ Almost same as the original animatediff-cli, but with a slight change in config 
         }
       },
       "guess_mode":false,
-      "controlnet_conditioning_scale": 1.0,    # control weight (important)
-      "control_guidance_start": 0.0,       # starting control step
-      "control_guidance_end": 1.0,         # ending control step
-      "control_scale_list":[0.5,0.4,0.3,0.2,0.1]    # list of influences on neighboring frames (important)
-    },                                              # This means that there is an impact of 0.5 on both neighboring frames and 0.4 on the one next to it. Try lengthening, shortening, or changing the values inside.
+      # control weight (important)
+      "controlnet_conditioning_scale": 1.0,
+      # starting control step
+      "control_guidance_start": 0.0,
+      # ending control step
+      "control_guidance_end": 1.0,
+      # list of influences on neighboring frames (important)
+      # This means that there is an impact of 0.5 on both neighboring frames and 0.4 on the one next to it. Try lengthening, shortening, or changing the values inside.
+      "control_scale_list":[0.5,0.4,0.3,0.2,0.1],
+      # list of regions where controlnet works
+      # In this example, it only affects region "0", but not "background".
+      "control_region_list": ["0"]
+    },
     "controlnet_ip2p":{
       "enable": true,
       "use_preprocessor":true,
@@ -222,7 +250,9 @@ Almost same as the original animatediff-cli, but with a slight change in config 
       "controlnet_conditioning_scale": 1.0,
       "control_guidance_start": 0.0,
       "control_guidance_end": 1.0,
-      "control_scale_list":[0.5,0.4,0.3,0.2,0.1]
+      "control_scale_list":[0.5,0.4,0.3,0.2,0.1],
+      # In this example, all regions are affected
+      "control_region_list": []
     },
     "controlnet_lineart_anime":{
       "enable": true,
@@ -231,7 +261,9 @@ Almost same as the original animatediff-cli, but with a slight change in config 
       "controlnet_conditioning_scale": 1.0,
       "control_guidance_start": 0.0,
       "control_guidance_end": 1.0,
-      "control_scale_list":[0.5,0.4,0.3,0.2,0.1]
+      "control_scale_list":[0.5,0.4,0.3,0.2,0.1],
+      # In this example, it only affects region "background", but not "0".
+      "control_region_list": ["background"]
     },
     "controlnet_openpose":{
       "enable": true,
@@ -240,7 +272,9 @@ Almost same as the original animatediff-cli, but with a slight change in config 
       "controlnet_conditioning_scale": 1.0,
       "control_guidance_start": 0.0,
       "control_guidance_end": 1.0,
-      "control_scale_list":[0.5,0.4,0.3,0.2,0.1]
+      "control_scale_list":[0.5,0.4,0.3,0.2,0.1],
+      # In this example, all regions are affected (since these are the only two regions defined)
+      "control_region_list": ["0", "background"]
     },
     "controlnet_softedge":{
       "enable": true,
