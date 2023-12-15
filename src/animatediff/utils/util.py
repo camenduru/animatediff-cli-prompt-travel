@@ -47,7 +47,7 @@ def save_frames(video: Tensor, frames_dir: PathLike, show_progress:bool=True):
     frames_dir.mkdir(parents=True, exist_ok=True)
     frames = rearrange(video, "b c t h w -> t b c h w")
     if show_progress:
-        for idx, frame in enumerate(tqdm(frames, desc=f"Saving frames to {frames_dir.stem}")):
+        for idx, frame in enumerate(tqdm(frames, desc=f"Saving frames to {frames_dir.stem}", leave=True)):
             save_image(frame, frames_dir.joinpath(f"{idx:08d}.png"))
     else:
         for idx, frame in enumerate(frames):
@@ -71,7 +71,7 @@ def save_frames(video: Tensor, frames_dir: PathLike, show_progress:bool=True):
 def save_imgs(imgs:List[Image.Image], frames_dir: PathLike):
     frames_dir = Path(frames_dir)
     frames_dir.mkdir(parents=True, exist_ok=True)
-    for idx, img in enumerate(tqdm(imgs, desc=f"Saving frames to {frames_dir.stem}")):
+    for idx, img in enumerate(tqdm(imgs, desc=f"Saving frames to {frames_dir.stem}", leave=True)):
         img.save( frames_dir.joinpath(f"{idx:08d}.png") )
 
 def save_video(video: Tensor, save_path: PathLike, fps: int = 8):

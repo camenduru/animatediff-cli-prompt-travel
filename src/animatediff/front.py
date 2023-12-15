@@ -1,155 +1,122 @@
-import typer
 import gradio as gr
+from animatediff.execute import execute, download_videos, execute_impl
+import sys
+import io
+import os
+import time
 
-app = typer.Typer()
+# Define the function signature
+def execute_wrapper(config: str, urls: str, delete_if_exists: bool, is_test: bool, is_refine: bool):
 
-@app.command(no_args_is_help=True)
-def auto_exec(
-    video_url: str = typer.Argument(..., help="Video URL"),
-    video: str = typer.Argument(..., help="Video file path"),
-    config: str = typer.Argument(..., help="Config file path"),
-    delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
-    is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
-    is_refinewo: bool = typer.Option(False, "--is_refinewo", help="Run in refinewo mode"),
-):
-    # ここで引数を使用して AnimateDiff を auto-exec する処理を書く
-    typer.echo(f"Video URL: {video_url}")
-    typer.echo(f"Video File: {video}")
-    typer.echo(f"Config File: {config}")
-    typer.echo(f"Delete if exists: {delete_if_exists}")
-    typer.echo(f"Is Test: {is_test}")
-    typer.echo(f"Is Refinewo: {is_refinewo}")
-    # AnimateDiff の auto-exec の処理を追加
+    start_time = time.time()
+    if not config:
+        yield 'Error: Configs is required.', None
 
-    #VideoNameの引数でそこからvideo_nameを取得するロジックをここに追加する
-    print("video name:", video)
+    if not urls:
+        yield 'Error: URLs input is required.', None
 
-    if video.startswith("/notebooks"):
-        video = video[len("/notebooks"):]
-
-    video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-
-    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
-    stylize_fg_dir = stylize_dir + '/fg_00_jjj'
-    stylize_bf_dir = stylize_dir + '/bg_jjj'
-    path_to_check = Path(stylize_dir)
+    config_path = os.path.join("./config/fix", config)
+    videos = []
+    urls = [url.strip() for url in urls.split('\n') if url]
+#    bg_config = bg_config.strip()
+    bg_config = None
+    yield 'generation Initiated...', None, None, None, None
     
-    if path_to_check.exists() and not deleteIfExists:
-        print(f"config already exists. skip create-config")
-    else: path_to_check.exists() and deleteIfExists:
-        try:
-            print(f"Delete folder and create again")
-            shutil.rmtree(directory_path)
-        except Exception as e:
-            print(f"no folder exists")
-#        !rm -r {stylize_dir}
-#        !animatediff stylize create-config {video} -c {con} -f 15
-        create_config(
-            org_movie=video,
-            config_org=con,
-            fps=15,
-        )
-        create_mask(stylize_dir)
-#        !animatediff stylize create-mask {stylize_dir} 
-
-    if is_test:
-        generate(stylize_dir=stylize_fg_dir, length=16)
-#        !animatediff stylize generate {stylize_fg_dir} -L 16
+    if videos:
+        for video in videos:
+            yield from execute_impl(video=video, config=config_path, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
     else:
-        generate(stylize_dir=stylize_fg_dir)
-#        !animatediff stylize generate {stylize_fg_dir}
+        save_folder = './data/video'
+        saved_files = download_videos(urls,save_folder)
+        for saved_file in saved_files:
+            print(saved_file)
+            print(config)
+            yield from execute_impl(video=saved_file, config=config_path, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)    
+    end_time = time.time()
 
-    if is_refine:
-        result_dir = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
-        refine(out_dir=stylize_fg_dir, config_path=config_path, width=768)
-#        !animatediff refine {result_dir} -W 768  
+    execution_time = end_time - start_time
+    print(f"実行時間: {execution_time}秒")
 
-def find_next_available_number(save_folder):
-    existing_files = [f for f in os.listdir(save_folder) if f.startswith('dance') and f.endswith('.mp4')]
-    existing_numbers = [int(file[5:10]) for file in existing_files]
-
-    if existing_numbers:
-        return max(existing_numbers) + 1
-    else:
-        return 1
-
-def download_videos(video_urls, save_folder):
-#    next_available_number = find_next_available_number(save_folder)
-    v_name = load_video_name(video_urls)
-    ydl_opts = {
-        'outtmpl': os.path.join(save_folder, f'{v_name}.%(ext)s'),
-    }
-    saved_file_paths = []
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        for video_url in video_urls:
-            result = ydl.extract_info(video_url, download=True)
-            if 'entries' in result:
-                for entry in result['entries']:
-                    if 'filename' in entry:
-                        saved_file_paths.append(entry['filename'])
-                    else:
-                        # Alternative approach to determine file name
-                        file_extension = entry.get('ext', 'mp4')
-                        saved_file_paths.append(os.path.join(save_folder, f'dance{next_available_number:05d}.{file_extension}'))
-                    next_available_number += 1
-            else:
-                if 'filename' in result:
-                    saved_file_paths.append(result['filename'])
-                else:
-                    # Alternative approach to determine file name
-                    file_extension = result.get('ext', 'mp4')
-                    saved_file_paths.append(os.path.join(save_folder, f'dance{next_available_number:05d}.{file_extension}'))
-                    next_available_number += 1
-    return saved_file_paths
-
-def get_last_sorted_subfolder(base_folder):
-    subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
-    sorted_subfolders = sorted(subfolders, key=lambda folder: os.path.basename(folder), reverse=True)
-    last_sorted_subfolder = sorted_subfolders[0] if sorted_subfolders else None
-    return last_sorted_subfolder
-
-def get_first_matching_folder(base_folder):
-    all_folders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
-    pattern = re.compile(r'\d{2}-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}')
-    matching_folders = [folder for folder in all_folders if pattern.match(os.path.basename(folder))]
-    first_matching_folder = matching_folders[0] if matching_folders else None
-    return first_matching_folder
-
-def load_video_name(url, video_name):
-    folder_path = '/config/'
-    file_path = os.path.join(folder_path, 'video_url.json')
-    if not os.path.exists(file_path):
-        data = []
-    else:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-    existing_entry = next((entry for entry in data if entry['url'] == url), None)
-    if existing_entry:
-        return existing_entry['video_name']
-    else:
-        count = len(data) + 1
-        new_video_name = f'dance{count:05d}'
-        new_entry = {'url': url, 'video_name': new_video_name}
-        data.append(new_entry)
-        with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(data, file, ensure_ascii=False, indent=2)
-        return new_video_name
-
-if videos:
-    for video in videos:
-        for con in configs:
-            try:
-                exec_video(video, con)
-            except:
-                print("An exception occurred")
-else:
-    save_folder = '/storage/aj/animatediff-cli-prompt-travel/data/video'
-    saved_files = download_videos(video_urls,save_folder)
-    for saved_file in saved_files:
-        print(saved_file)
-        for con in configs:
-            try:
-                exec_video(saved_file, con)
-            except:
-                print("An exception occurred")
+def create_file_list(folder_path):
+    file_list = []
     
+    # 指定されたフォルダ内のファイルを取得
+    files = os.listdir(folder_path)
+    
+    # ファイルをフォルダ、拡張子を抜いたABC順にソート
+    files.sort(key=lambda x: (os.path.splitext(x)[0].lower(), x))
+    
+    # ソートされたファイルのリストを作成
+    for file_name in files:
+        file_path = os.path.join(folder_path, file_name)
+        if os.path.isfile(file_path):
+            file_list.append(file_name)
+    
+    return file_list
+
+from animatediff.cli import cli
+def launch():
+    cli()
+
+    folder_path = "config/fix"
+    # フォルダ内のファイルのリストを取得
+    result_list = create_file_list(folder_path)
+    iface = gr.Interface(
+        fn=execute_wrapper, 
+        inputs=[
+            gr.Dropdown(choices=result_list, info="please select", label="Config"),
+#            gr.Textbox(lines=3, placeholder="Enter URLs, separated by commas", label="URLs"),
+            gr.Textbox(lines=1, placeholder="https://www.tiktok.com/@ai_hinahina/video/7308604819021827330", label="URL"),
+            gr.Checkbox(label="Delete if exists"),
+            gr.Checkbox(label="Is test", value=True),
+            gr.Checkbox(label="Is refine"),
+        ],
+#        outputs=["label", "video"],
+        outputs=[
+            gr.Label(value="Status", label="Status", scale=3),
+            gr.Video(width=256, title="Original Video", scale=1), 
+            gr.Video(width=256, title="Front Video", scale=1), 
+            gr.Video(width=256, title="Refined Front Video", scale=1), 
+            gr.Video(width=256, title="Generated Video", scale=1),
+        ],
+#        capture_session=True,
+        allow_flagging='never',
+        title="AnimateDiff-GUI-prompt-travel",
+    )
+    iface.queue()
+    iface.launch(share=True)
+# def launch():
+#     # 指定したフォルダ以下のファイル一覧を取得
+#     folder_path = "/storage/aj/animatediff-cli-prompt-travel/config/fix"
+#     config_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+
+#     # ファイル名から拡張子を取り除く
+#     config_files_without_extension = [os.path.splitext(file)[0] for file in config_files]
+
+#     # ファイル一覧をリストボックスの選択肢に変換
+#     file_choices = [(file, file) for file in config_files_without_extension]
+
+
+#     # Define the Gradio interface
+#     iface = gr.Interface(
+#         execute_wrapper, 
+#         [
+#     #        gr.Textbox(lines=3, placeholder="Enter video file paths, separated by commas", label="Videos"),
+#             gr.CheckboxGroup(file_choices, info="please select", label="Configs"),
+#     #        gr.Textbox(lines=3, placeholder="Enter config file paths, separated by commas", label="Configs"),
+#             gr.Textbox(lines=3, placeholder="Enter URLs, separated by commas", label="URLs"),
+#     #        gr.Textbox(lines=1, placeholder="Enter bg_config file path", label="BG Config"),
+#             gr.Checkbox(label="Delete if exists"),
+#             gr.Checkbox(label="Is test", value=True),
+#             gr.Checkbox(label="Is refine"),
+#         ],
+#         outputs=["text", "video"],
+#         allow_flagging='never',
+#     )
+
+#     # Launch the interface
+#     iface.launch(share=True)
+
+    # 無限ループを追加してセルが終了しないようにする
+    while True:
+        pass

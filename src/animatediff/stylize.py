@@ -810,7 +810,7 @@ def interpolate(
 
     org_frame = sorted(glob.glob( os.path.join(org_frame_dir, "[0-9]*.png"), recursive=False))
 
-    for org in tqdm(org_frame):
+    for org in tqdm(org_frame, leave=True):
         img = get_resized_image(org, W, H)
         img.save(org)
 
@@ -819,7 +819,7 @@ def interpolate(
 
     from animatediff.softmax_splatting.run import estimate2
 
-    for sty1,sty2 in tqdm(zip(stylize_frame,stylize_frame[1:]), total=len(stylize_frame[1:])):
+    for sty1,sty2 in tqdm(zip(stylize_frame,stylize_frame[1:]), total=len(stylize_frame[1:]), leave=True):
         sty1 = Path(sty1)
         sty2 = Path(sty2)
 
@@ -1059,7 +1059,8 @@ def create_mask(
 
     model_config: ModelConfig = get_model_config(config_org)
     time_str = model_config.name
-    if not bg_config == 'NA':
+    if bg_config is not None:
+#    if not bg_config == 'NA':
         bg_model_config: ModelConfig = get_model_config(bg_config)
 
     if frame_dir is None:
@@ -1247,7 +1248,8 @@ def create_mask(
                 model_config.stylize_config["1"]["height"]=int(height * 1.25 //8*8)
 
         save_config_path = output.joinpath("prompt.json")
-        if output == bg_dir and not bg_config == 'NA':
+#        if output == bg_dir and not bg_config == 'NA':
+        if output == bg_dir and bg_config is not None:
             model_config.path = bg_model_config.path
             model_config.seed = bg_model_config.seed
             model_config.scheduler = bg_model_config.scheduler
@@ -1363,7 +1365,7 @@ def composite(
             help="Path to fg frames directory. default is 'STYLIZE_DIR/fg_00_[model_name]/timestamp/00-timestamp'",
         ),
     ] = None,
-):
+) -> str:
     """composite FG and BG"""
 
     from animatediff.utils.composite import composite, simple_composite
@@ -1505,9 +1507,7 @@ def composite(
     save_output(out_images,bg_dir,out_file,model_config.output,True,save_frames=None,save_video=None)
 
     logger.info(f"output to {out_file}")
-
-
-
+    return out_file
 
 @stylize.command(no_args_is_help=True)
 def create_region(

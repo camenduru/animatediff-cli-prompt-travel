@@ -69,7 +69,7 @@ try:
 except:
     IN_COLAB = False
 
-if IN_COLAB:
+# if IN_COLAB:
     import sys
     logging.basicConfig(
         level=logging.INFO,
@@ -78,16 +78,16 @@ if IN_COLAB:
         datefmt="%H:%M:%S",
         force=True,
     )
-else:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
-        handlers=[
-            RichHandler(console=console, rich_tracebacks=True),
-        ],
-        datefmt="%H:%M:%S",
-        force=True,
-    )
+# else:
+#     logging.basicConfig(
+#         level=logging.INFO,
+#         format="%(message)s",
+#         handlers=[
+#             RichHandler(console=console, rich_tracebacks=True),
+#         ],
+#         datefmt="%H:%M:%S",
+#         force=True,
+#     )
 
 logger = logging.getLogger(__name__)
 

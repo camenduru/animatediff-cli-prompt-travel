@@ -993,7 +993,7 @@ def controlnet_preprocess(
 
                         use_preprocessor = item["use_preprocessor"] if "use_preprocessor" in item else True
 
-                        for img_path in tqdm(cond_imgs, desc=f"Preprocessing images ({c})"):
+                        for img_path in tqdm(cond_imgs, desc=f"Preprocessing images ({c})", leave=True):
                             frame_no = int(Path(img_path).stem)
                             if frame_no < duration:
                                 if frame_no not in controlnet_image_map:
@@ -1007,7 +1007,7 @@ def controlnet_preprocess(
         if save_detectmap and processed:
             det_dir = out_dir.joinpath(f"{0:02d}_detectmap/{c}")
             det_dir.mkdir(parents=True, exist_ok=True)
-            for frame_no in tqdm(controlnet_image_map, desc=f"Saving Preprocessed images ({c})"):
+            for frame_no in tqdm(controlnet_image_map, desc=f"Saving Preprocessed images ({c})", leave=True):
                 save_path = det_dir.joinpath(f"{frame_no:08d}.png")
                 if c in controlnet_image_map[frame_no]:
                     controlnet_image_map[frame_no][c].save(save_path)
@@ -1067,7 +1067,7 @@ def ip_adapter_preprocess(
             if len(imgs) > 0:
                 prepare_ip_adapter_sdxl() if is_sdxl else prepare_ip_adapter()
                 ip_adapter_map["images"] = {}
-                for img_path in tqdm(imgs, desc=f"Preprocessing images (ip_adapter)"):
+                for img_path in tqdm(imgs, desc=f"Preprocessing images (ip_adapter)", leave=True):
                     frame_no = int(Path(img_path).stem)
                     if frame_no < duration:
                         if resized_to_square:
@@ -1094,7 +1094,7 @@ def ip_adapter_preprocess(
             if (ip_adapter_config_map["save_input_image"] == True) and processed:
                 det_dir = out_dir.joinpath(f"{0:02d}_ip_adapter/")
                 det_dir.mkdir(parents=True, exist_ok=True)
-                for frame_no in tqdm(ip_adapter_map["images"], desc=f"Saving Preprocessed images (ip_adapter)"):
+                for frame_no in tqdm(ip_adapter_map["images"], desc=f"Saving Preprocessed images (ip_adapter)", leave=True):
                     save_path = det_dir.joinpath(f"{frame_no:08d}.png")
                     ip_adapter_map["images"][frame_no].save(save_path)
 
@@ -1302,7 +1302,7 @@ def img2img_preprocess(
             if len(imgs) > 0:
                 img2img_map["images"] = {}
                 img2img_map["denoising_strength"] = img2img_config_map["denoising_strength"]
-                for img_path in tqdm(imgs, desc=f"Preprocessing images (img2img)"):
+                for img_path in tqdm(imgs, desc=f"Preprocessing images (img2img)", leave=True):
                     frame_no = int(Path(img_path).stem)
                     if frame_no < duration:
                         img2img_map["images"][frame_no] = get_resized_image(img_path, width, height)
@@ -1311,7 +1311,7 @@ def img2img_preprocess(
             if (img2img_config_map["save_init_image"] == True) and processed:
                 det_dir = out_dir.joinpath(f"{0:02d}_img2img_init_img/")
                 det_dir.mkdir(parents=True, exist_ok=True)
-                for frame_no in tqdm(img2img_map["images"], desc=f"Saving Preprocessed images (img2img)"):
+                for frame_no in tqdm(img2img_map["images"], desc=f"Saving Preprocessed images (img2img)", leave=True):
                     save_path = det_dir.joinpath(f"{frame_no:08d}.png")
                     img2img_map["images"][frame_no].save(save_path)
 
@@ -1335,7 +1335,7 @@ def mask_preprocess(
         image_dir = data_dir.joinpath( region_config_map["mask_dir"] )
         imgs = sorted(glob.glob( os.path.join(image_dir, "[0-9]*.png"), recursive=False))
         if len(imgs) > 0:
-            for img_path in tqdm(imgs, desc=f"Preprocessing images (mask)"):
+            for img_path in tqdm(imgs, desc=f"Preprocessing images (mask)", leave=True):
                 frame_no = int(Path(img_path).stem)
                 if frame_no < duration:
                     mask_map[frame_no] = get_resized_image(img_path, width, height)
@@ -1360,7 +1360,7 @@ def mask_preprocess(
         if (region_config_map["save_mask"] == True) and processed:
             det_dir = out_dir.joinpath(f"mask/")
             det_dir.mkdir(parents=True, exist_ok=True)
-            for frame_no in tqdm(mask_map, desc=f"Saving Preprocessed images (mask)"):
+            for frame_no in tqdm(mask_map, desc=f"Saving Preprocessed images (mask)", leave=True):
                 save_path = det_dir.joinpath(f"{frame_no:08d}.png")
                 mask_map[frame_no].save(save_path)
 
@@ -1714,7 +1714,7 @@ def run_upscale(
     logger.info(f"{control_guidance_end=}")
 
 
-    for i, org_image in enumerate(tqdm(images, desc=f"Upscaling...")):
+    for i, org_image in enumerate(tqdm(images, desc=f"Upscaling..."), leave=True):
 
         cur_positive = get_current_prompt_embeds(i, len(images))
 

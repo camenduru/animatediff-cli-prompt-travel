@@ -1,4 +1,7 @@
+import gradio as gr
 import os
+import glob
+from datetime import datetime
 import re
 from pathlib import Path
 import json
@@ -17,7 +20,6 @@ execute: typer.Typer = typer.Typer(
     help="execute video",
 )
 
-
 @execute.command(no_args_is_help=True)
 def execute(
     videos: list = typer.Argument(..., help="List of video file paths"),
@@ -26,14 +28,13 @@ def execute(
     delete_if_exists: bool = typer.Option(False, "--deleteIfExists", help="Delete if files already exist"),
     is_test: bool = typer.Option(False, "--is_test", help="Run in test mode"),
     is_refine: bool = typer.Option(False, "--is_refine", help="Run in refine mode"),
-    bg_config: str = typer.Option("NA", help="Background prompt.json file path"),    
+    bg_config: str = typer.Option(None, help="Background prompt.json file path"),    
 #    is_composite: bool = typer.Option(True, "--is_composite", help="Run in composite mode"),
-
 ):
     if videos:
         for video in videos:
             for config in configs:
-                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config, )
+                execute_impl(video=video, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
     else:
         save_folder = './data/video'
         saved_files = download_videos(urls,save_folder)
@@ -43,13 +44,16 @@ def execute(
                 execute_impl(video=saved_file, config=config, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
 
 def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,is_refine: bool, bg_config: str):
-
+    
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
     if config.startswith("/notebooks"):
         config = config[len("/notebooks"):]
-    if bg_config.startswith("/notebooks"):
-        bg_config = bg_config[len("/notebooks"):]
+    if bg_config is not None:
+        if bg_config.startswith("/notebooks"):
+            bg_config = bg_config[len("/notebooks"):]
+    print(f"video1: {video}")
+    yield 'generating config...', video, None, None, None
         
     video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
 
@@ -57,12 +61,12 @@ def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,
     model_config: ModelConfig = get_model_config(config)
     p_name = model_config.name
     
-    if not bg_config == 'NA':
+    if bg_config is not None:
         bg_config = Path(bg_config)
         bg_model_config: ModelConfig = get_model_config(bg_config)
     
 #    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/jjj-' + video_name
-    stylize_dir='./stylize/' + p_name + '-' + video_name
+    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/' + p_name + '-' + video_name
     stylize_fg_dir = stylize_dir + '/fg_00_'+p_name
     stylize_fg_dir = Path(stylize_fg_dir)
     stylize_bg_dir = stylize_dir + '/bg_'+p_name
@@ -80,33 +84,62 @@ def execute_impl(video: str, config: str, delete_if_exists: bool, is_test: bool,
             fps=15,
         )
         create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
+        
+    yield 'generating fg bg video...', video, None, None, None
+        
     if is_test:
         generate(stylize_dir=stylize_fg_dir, length=16)
-        if not bg_config == 'NA':
+        if bg_config is not None:
             generate(stylize_dir=stylize_bg_dir, length=16)
     else:
         generate(stylize_dir=stylize_fg_dir)
-        if not bg_config == 'NA':
+        if bg_config is not None:
             generate(stylize_dir=stylize_bg_dir)
-
+            
+    video2 = find_last_folder_and_mp4_file(stylize_fg_dir)
+    print(f"video2: {video2}")
     if is_refine:
+        yield 'refining fg video', video, video2, None, None
+        
         result_dir = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
         refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
 #        !animatediff refine {result_dir} -W 768
+    video3 = find_last_folder_and_mp4_file(stylize_fg_dir)
+    print(f"video3: {video3}")
+    yield 'compositing video', video2, video3, None
 
     fg_result = get_first_matching_folder(get_last_sorted_subfolder(stylize_fg_dir))
     bg_result = get_first_matching_folder(get_last_sorted_subfolder(stylize_bg_dir))
 
-    if not bg_config == 'NA':
-        composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
+    if bg_config is not None:
+        final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
     else:
-        composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
+        final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
+
     print(f"fg_フォルダ: {fg_result}")
-    if not bg_config == 'NA':
+    if bg_config is not None:
         print(f"bg_フォルダ: {bg_result}")
     else:
         print(f"bg_フォルダ: {stylize_bg_dir/'00_img2img'}")
+    print(f"final_video_dir: {final_video_dir}")
+    yield 'video is ready', video2, video3, final_video_dir
 
+def find_last_folder_and_mp4_file(folder_path):
+    # フォルダ内のフォルダを名前順にソート
+    subfolders = sorted([f.path for f in os.scandir(folder_path) if f.is_dir()], key=lambda x: os.path.basename(x))
+
+    # 一番最後のフォルダを取得
+    last_folder = subfolders[-1]
+
+    # 最後のフォルダ内の.mp4ファイルを検索
+    mp4_files = glob.glob(os.path.join(last_folder, '*.mp4'))
+
+    # 最初に見つかった.mp4ファイルのパスを取得して返却
+    if mp4_files:
+        return mp4_files[0]
+    else:
+        return None
+    
 def find_next_available_number(save_folder):
     existing_files = [f for f in os.listdir(save_folder) if f.startswith('dance') and f.endswith('.mp4')]
     existing_numbers = [int(file[5:10]) for file in existing_files]
