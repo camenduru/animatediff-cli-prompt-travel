@@ -20,7 +20,6 @@ from animatediff.utils.util import (extract_frames, get_resized_image,
                                     path_from_cwd, prepare_anime_seg,
                                     prepare_groundingDINO, prepare_propainter,
                                     prepare_sam_hq, prepare_softsplat)
-
 logger = logging.getLogger(__name__)
 
 
@@ -256,7 +255,8 @@ def create_config(
     # make the output directory
 #    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
     org_movie = Path(org_movie)
-    save_dir = out_dir.joinpath(f"{time_str}-{org_movie.stem}")
+#    save_dir = out_dir.joinpath(f"{time_str}-{org_movie.stem}")
+    save_dir = out_dir.joinpath(f"{org_movie.stem}")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
@@ -1038,7 +1038,8 @@ def create_mask(
                                         crop_mask_list, save_crop_info)
     from animatediff.utils.mask_animseg import animseg_create_fg
     from animatediff.utils.mask_rembg import rembg_create_fg
-
+    import re
+    
     is_danbooru_format = not is_no_danbooru_format
     with_confidence = not without_confidence
 
@@ -1058,7 +1059,10 @@ def create_mask(
     config_org = stylize_dir.joinpath("prompt.json")
 
     model_config: ModelConfig = get_model_config(config_org)
-    time_str = model_config.name
+    original_video_path = model_config.stylize_config["original_video"]["path"]
+    match = re.search(r'(dance\d+)', original_video_path)
+    video_name = match.group(1)
+    time_str = video_name
     if bg_config is not None:
 #    if not bg_config == 'NA':
         bg_model_config: ModelConfig = get_model_config(bg_config)
