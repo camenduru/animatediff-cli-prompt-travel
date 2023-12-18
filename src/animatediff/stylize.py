@@ -1041,6 +1041,8 @@ def create_mask(
     from animatediff.utils.mask_rembg import rembg_create_fg
     import re
     
+    print(f"no_crop:{no_crop}")
+    
     is_danbooru_format = not is_no_danbooru_format
     with_confidence = not without_confidence
 
@@ -1154,6 +1156,7 @@ def create_mask(
             save_crop_info(mask_pos_list, crop_size_hw, frame_size_hw, fg_dir / "crop_info.json")
         else:
             crop_size_hw = None
+            logger.info(f"no crop fg_masked_dir!!!!!!!!!!!!!!!!!")
 
         logger.info(f"mask from [{mask_token}] are output to {fg_dir}")
 

@@ -1097,7 +1097,7 @@ def refine(
     # make the output directory
     p_name = model_config.name
     
-    save_dir = out_dir.joinpath(f"{time_str}-99")
+    save_dir = out_dir.joinpath(f"{time_str}_99")
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
