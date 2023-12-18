@@ -12,7 +12,7 @@ import pytz
 from animatediff.stylize import create_config, create_mask, generate, composite
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.cli import refine
-from animatediff.video_utils import extract_audio,create_video_with_audio
+from animatediff.video_utils import create_video
 
 execute: typer.Typer = typer.Typer(
     name="execute",
@@ -69,7 +69,7 @@ def execute_impl(video: str, config: Path, delete_if_exists: bool, is_test: bool
 
 #    stylize_dir='/storage/aj/animatediff-cli-prompt-travel/stylize/' + video_name
     stylize_dir='stylize/' + video_name
-    audio = stylize_dir + '/audio.wav'
+#    audio = stylize_dir + '/audio.wav'
     stylize_fg_dir = stylize_dir + '/fg_00_'+video_name
     stylize_fg_dir = Path(stylize_fg_dir)
     stylize_bg_dir = stylize_dir + '/bg_'+video_name
@@ -87,7 +87,7 @@ def execute_impl(video: str, config: Path, delete_if_exists: bool, is_test: bool
             fps=15,
         )
         create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
-        extract_audio(video, audio)
+#        extract_audio(video, audio)
 
     # yield 'generating fg bg video...', video, None, None, None
 
@@ -135,7 +135,12 @@ def execute_impl(video: str, config: Path, delete_if_exists: bool, is_test: bool
     # 新しいファイルのパスを作成
     new_file_path = os.path.join(final_dir,  p_name + ".mp4")
     
-    create_video_with_audio(final_video_dir, audio, new_file_path)
+    cpmp4_file = str(final_video_dir) + '.mp4'
+    
+    print(f"final_video: {cpmp4_file}")
+    
+#   final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
+    create_video(video, cpmp4_file, new_file_path)
     # yield 'video is ready', video2, video3, output_video_path
     
     

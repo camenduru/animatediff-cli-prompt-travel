@@ -23,7 +23,9 @@ from diffusers import (AutoencoderKL, ControlNetModel, DiffusionPipeline,
                        StableDiffusionPipeline, StableDiffusionXLPipeline)
 from PIL import Image
 from torchvision.datasets.folder import IMG_EXTENSIONS
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
+
 from transformers import (AutoImageProcessor, CLIPImageProcessor,
                           CLIPTextConfig, CLIPTextModel,
                           CLIPTextModelWithProjection, CLIPTokenizer,

@@ -13,7 +13,9 @@ from PIL import Image
 from segment_anything_hq import (SamPredictor, build_sam_vit_b,
                                  build_sam_vit_h, build_sam_vit_l)
 from segment_anything_hq.build_sam import build_sam_vit_t
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
+
 
 logger = logging.getLogger(__name__)
 

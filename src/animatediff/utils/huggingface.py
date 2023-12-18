@@ -5,7 +5,8 @@ from typing import Optional
 
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
 from huggingface_hub import hf_hub_download, snapshot_download
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
 
 from animatediff import HF_HUB_CACHE, HF_LIB_NAME, HF_LIB_VER, get_dir
 from animatediff.utils.util import path_from_cwd

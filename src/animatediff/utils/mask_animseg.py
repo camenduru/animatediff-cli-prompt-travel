@@ -9,7 +9,8 @@ import onnxruntime as rt
 import torch
 from PIL import Image
 from rembg import new_session, remove
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,9 @@ from einops import rearrange
 from PIL import Image
 from torch import Tensor
 from torchvision.utils import save_image
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
+
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,8 @@ import numpy as np
 import onnxruntime
 import pandas as pd
 from PIL import Image
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
 
 from animatediff.utils.util import prepare_wd14tagger
 

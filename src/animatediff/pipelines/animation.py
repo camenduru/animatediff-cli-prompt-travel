@@ -23,7 +23,9 @@ from diffusers.utils import (BaseOutput, deprecate, is_accelerate_available,
 from diffusers.utils.torch_utils import is_compiled_module, randn_tensor
 from einops import rearrange
 from packaging import version
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
+
 from transformers import CLIPImageProcessor, CLIPTokenizer
 
 from animatediff.ip_adapter import IPAdapter, IPAdapterFull, IPAdapterPlus

@@ -11,7 +11,8 @@ from typing import Annotated, Optional
 import torch
 import typer
 from PIL import Image
-from tqdm.rich import tqdm
+#from tqdm.rich import tqdm
+from tqdm import tqdm
 
 from animatediff import __version__, get_dir
 from animatediff.settings import ModelConfig, get_model_config
@@ -1210,7 +1211,10 @@ def create_mask(
     if ignore_list.is_file():
         with open(ignore_list) as f:
             black_list = [s.strip() for s in f.readlines()]
-
+    print('##############################################')
+    print(data_dir)
+    print('##############################################')
+    
     for output, size in output_list:
 
 #        model_config.prompt_map = get_labels(
@@ -1355,7 +1359,7 @@ def composite(
             "--bg_dir",
             "-bg",
             path_type=Path,
-            file_okay=False,
+            file_okay=False, dir_okay=True, exists=True,
             help="Path to bg frames directory. default is 'STYLIZE_DIR/00_img2img'",
         ),
     ] = None,
@@ -1365,7 +1369,7 @@ def composite(
             "--fg_dir",
             "-fg",
             path_type=Path,
-            file_okay=False,
+            file_okay=False, dir_okay=True, exists=True,
             help="Path to fg frames directory. default is 'STYLIZE_DIR/fg_00_[model_name]/timestamp/00-timestamp'",
         ),
     ] = None,
