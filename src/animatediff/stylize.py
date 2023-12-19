@@ -494,17 +494,18 @@ def create_config(
 
     logger.info(f"config = { save_config_path }")
     logger.info(f"stylize_dir = { save_dir }")
+    logger.info("create_config completed")
 
-    logger.info(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    logger.info(f"Hint. Edit the config file before starting the generation")
-    logger.info(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    logger.info(f"1. Change 'path' and 'motion_module' as needed")
-    logger.info(f"2. Enter the 'head_prompt' or 'tail_prompt' with your preferred prompt, quality prompt, lora trigger word, or any other prompt you wish to add.")
-    logger.info(f"3. Change 'n_prompt' as needed")
-    logger.info(f"4. Add the lora you need to 'lora_map'")
-    logger.info(f"5. If you do not like the default settings, edit 'ip_adapter_map' or 'controlnet_map'. \nIf you want to change the controlnet type, you need to replace the input image.")
-    logger.info(f"6. Change 'stylize_config' as needed. By default, it is generated twice: once for normal generation and once for upscaling.\nIf you don't need upscaling, delete the whole '1'.")
-    logger.info(f"7. Change 'output' as needed. Changing the 'fps' at this timing is not recommended as it will change the playback speed.\nIf you want to change the fps, specify it with the create-config option")
+    # logger.info(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    # logger.info(f"Hint. Edit the config file before starting the generation")
+    # logger.info(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    # logger.info(f"1. Change 'path' and 'motion_module' as needed")
+    # logger.info(f"2. Enter the 'head_prompt' or 'tail_prompt' with your preferred prompt, quality prompt, lora trigger word, or any other prompt you wish to add.")
+    # logger.info(f"3. Change 'n_prompt' as needed")
+    # logger.info(f"4. Add the lora you need to 'lora_map'")
+    # logger.info(f"5. If you do not like the default settings, edit 'ip_adapter_map' or 'controlnet_map'. \nIf you want to change the controlnet type, you need to replace the input image.")
+    # logger.info(f"6. Change 'stylize_config' as needed. By default, it is generated twice: once for normal generation and once for upscaling.\nIf you don't need upscaling, delete the whole '1'.")
+    # logger.info(f"7. Change 'output' as needed. Changing the 'fps' at this timing is not recommended as it will change the playback speed.\nIf you want to change the fps, specify it with the create-config option")
 
 
 @stylize.command(no_args_is_help=True)
@@ -737,7 +738,7 @@ def generate(
     output_1_dir = output_1_dir.rename(output_1_dir.parent / f"{time_str}_{1:02d}")
 
     logger.info(f"Stylized results are output to {output_1_dir}")
-
+    logger.info(f"Stylize generate completed")
 
 
 
@@ -1214,10 +1215,7 @@ def create_mask(
     if ignore_list.is_file():
         with open(ignore_list) as f:
             black_list = [s.strip() for s in f.readlines()]
-    print('##############################################')
-    print(data_dir)
-    print('##############################################')
-    
+
     for output, size in output_list:
 
 #        model_config.prompt_map = get_labels(
@@ -1276,7 +1274,9 @@ def create_mask(
             print("updated BG config")
 
         save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
-
+    logger.info(f"create mask completed")
+        
+        
 @stylize.command(no_args_is_help=True)
 def composite(
     stylize_dir: Annotated[
