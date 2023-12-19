@@ -42,9 +42,9 @@ python /src/animatediff/front.py
 
 ```
 ### Paperspace
-open /animatediff-cli-prompt-travel/animatediff-cli-prompt-travel-j.ipynb
-execute 2nd cell -> installation
-execute 1st cell -> boot
+open /animatediff-cli-prompt-travel/animatediff-cli-prompt-travel-j.ipynb  
+execute 2nd cell -> installation  
+execute 1st cell -> boot  
 
 ### Model, Motion Module, Lora prep
 You need to prepare Model, Motion Module, Lora and place them below
@@ -53,8 +53,8 @@ model : /animatediff-cli-prompt-travel/data/sd_models
 LoRA : /animatediff-cli-prompt-travel/data/lora  
 model : /animatediff-cli-prompt-travel/data/motion_modules  
 
-when you start, you can see the URL in console.
-Click and enjoy making video!
+when you start, you can see the URL in console.  
+Click and enjoy making video!  
 
 ### AnimateDiff Controlnet
 I just passed pictures from video internally. so if the scale is big, it can pull the result to original image.
