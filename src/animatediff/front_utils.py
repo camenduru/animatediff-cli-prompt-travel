@@ -244,11 +244,12 @@ def create_config_by_gui(
 ) -> Path:
     org_config='config/fix/real_base2.json'
     model_config: ModelConfig = get_model_config(org_config)
-    # print(f"inp_posi{head_prompt}")
-    # print(f"inp_lora1{inp_lora1}")
-    # print(f"inp_lora1_step{inp_lora1_step}")
-    # print(f"neg_prompt{neg_prompt}")
-
+    print(f"inp_posi{head_prompt}")
+    print(f"inp_lora1{inp_lora1}")
+    print(f"inp_lora1_step{inp_lora1_step}")
+    print(f"neg_prompt{neg_prompt}")
+    print(ip_image)
+    
     model_config.name = now_str
     model_config.path = Path(model)
     model_config.motion_module = Path(motion_module)
@@ -354,9 +355,13 @@ def save_image_to_path(image, file_path):
 
         # イメージを指定したパスに保存
         image.save(file_path)
+        print(f"########################################################")
         print(f"Image saved successfully to {file_path}")
+        print(f"########################################################")
     except Exception as e:
+        print(f"########################################################")
         print(f"An error occurred while saving the image: {e}")
+        print(f"########################################################")
     
 def get_config_path(now_str:str) -> Path:
     config_dir = Path("./config/from_ui")
