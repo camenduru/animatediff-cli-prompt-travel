@@ -17,8 +17,6 @@ And now you have GUI
 
 Python 3.10 and git client must be installed.
 
-git clone the repo.
-
 ```shell
 
 git clone https://github.com/JojoYay/animatediff-cli-prompt-travel
@@ -30,8 +28,15 @@ python -m pip install --upgrade pip
 # Torch installation must be modified to suit the environment. (https://pytorch.org/get-started/locally/)
 python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 python -m pip install -e .
+#boot GUI
+python /src/animatediff/front.py
 
 ```
+### Paperspace
+open /notebooks/storage/aj/animatediff-cli-prompt-travel/animatediff-cli-prompt-travel-j.ipynb
+execute 2nd cell -> installation
+execute 1st cell -> boot
+
 ### Model, Motion Module, Lora prep
 You need to prepare Model, Motion Module, Lora and place them below
 
