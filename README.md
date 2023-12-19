@@ -1,17 +1,49 @@
+# AnimateDiff-V2V-GUI
+
+I have forked AnimateDiff prompt travel to add front GUI
+to do that, actually I have updated all those folder names etc
+
+What you need is slitely different.
+I'm keep syncing the repo so far and hopefully those basic function can also be available.
+(But result folder structure is a bit different)
 
 
+### How is it?
+
+[AnimateDiff with prompt travel](https://github.com/s9roll7/animatediff-cli-prompt-travel) + [ControlNet](https://github.com/lllyasviel/ControlNet) + [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter)
+And now you have GUI
+
+### How to install
+
+Python 3.10 and git client must be installed.
+
+git clone the repo.
+
+```shell
+
+git clone https://github.com/JojoYay/animatediff-cli-prompt-travel
+cd animatediff-cli-prompt-travel
+py -3.10 -m venv venv
+venv\Scripts\activate.bat
+set PYTHONUTF8=1
+python -m pip install --upgrade pip
+# Torch installation must be modified to suit the environment. (https://pytorch.org/get-started/locally/)
+python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+python -m pip install -e .
+
+```
+### Model, Motion Module, Lora prep
+You need to prepare Model, Motion Module, Lora and place them below
+
+model : /animatediff-cli-prompt-travel/data/sd_models
+LoRA : /animatediff-cli-prompt-travel/data/lora
+model : /animatediff-cli-prompt-travel/data/motion_modules
+
+when you start, you can see the URL in console.
+Click and enjoy making video!
 
 
-
-
-
-# AnimateDiff prompt travel
-
-[AnimateDiff](https://github.com/guoyww/AnimateDiff) with prompt travel + [ControlNet](https://github.com/lllyasviel/ControlNet) + [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter)
-
-I added a experimental feature to animatediff-cli to change the prompt in the middle of the frame.
-
-It seems to work surprisingly well!
+below is just a copy from AnimateDiff-prompt-travel
 
 ### Example
 

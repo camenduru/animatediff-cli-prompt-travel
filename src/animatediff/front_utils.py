@@ -316,6 +316,9 @@ def create_config_by_gui(
     
     model_config.controlnet_map["max_samples_on_vram"] = 0
     model_config.controlnet_map["max_models_on_vram"] = 0
+    model_config.controlnet_map["save_detectmap"] = False
+    
+    model_config.img2img_map["save_init_image"] = False
     
     model_config.ip_adapter_map["enable"] = ip_ch
     model_config.ip_adapter_map["input_image_dir"] = stylize_dir/'00_ipadapter'
@@ -324,6 +327,7 @@ def create_config_by_gui(
     model_config.ip_adapter_map["is_plus_face"] = True if ip_type == "is_plus_face" else False
     model_config.ip_adapter_map["is_plus"] = True if ip_type == "is_plus" else False
     model_config.ip_adapter_map["is_light"] = True if ip_type == "is_light" else False
+    model_config.ip_adapter_map["save_input_image"] = False
     save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
     
     model_config.controlnet_map["animatediff_controlnet"]["enable"] = ad_ch
