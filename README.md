@@ -11,7 +11,16 @@ I'm keep syncing the repo so far and hopefully those basic function can also be 
 ### How is it?
 
 [AnimateDiff with prompt travel](https://github.com/s9roll7/animatediff-cli-prompt-travel) + [ControlNet](https://github.com/lllyasviel/ControlNet) + [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter)
-And now you have GUI
+And now you have GUI  
+You can specify your tiktok video URL.  
+Then that will automatically download the video and create mask and generate anime.  
+Then composit with original background.  
+refine can make video better but sometimes, it won't... plz try.  
+Test Run can only generate first 16 frames to see how it is.  
+if everything is okay, just untick and make entire video.  
+
+all the result will be placed under /animatediff-cli-prompt-travel/stylize  
+oops btw, I just used Singapore time zone because I'm there.
 
 ### How to install
 
@@ -33,7 +42,7 @@ python /src/animatediff/front.py
 
 ```
 ### Paperspace
-open /notebooks/storage/aj/animatediff-cli-prompt-travel/animatediff-cli-prompt-travel-j.ipynb
+open /animatediff-cli-prompt-travel/animatediff-cli-prompt-travel-j.ipynb
 execute 2nd cell -> installation
 execute 1st cell -> boot
 
@@ -46,6 +55,13 @@ model : /animatediff-cli-prompt-travel/data/motion_modules
 
 when you start, you can see the URL in console.
 Click and enjoy making video!
+
+### AnimateDiff Controlnet
+I just passed pictures from video internally. so if the scale is big, it can pull the result to original image.
+Usually I put 0.3-0.5.
+
+### is Test
+this can only generate first 16 frames. 
 
 
 below is just a copy from AnimateDiff-prompt-travel
