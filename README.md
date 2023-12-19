@@ -40,9 +40,9 @@ execute 1st cell -> boot
 ### Model, Motion Module, Lora prep
 You need to prepare Model, Motion Module, Lora and place them below
 
-model : /animatediff-cli-prompt-travel/data/sd_models
-LoRA : /animatediff-cli-prompt-travel/data/lora
-model : /animatediff-cli-prompt-travel/data/motion_modules
+model : /animatediff-cli-prompt-travel/data/sd_models  
+LoRA : /animatediff-cli-prompt-travel/data/lora  
+model : /animatediff-cli-prompt-travel/data/motion_modules  
 
 when you start, you can see the URL in console.
 Click and enjoy making video!
