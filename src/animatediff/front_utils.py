@@ -66,7 +66,7 @@ def find_safetensor_files(folder, suffix=''):
 
     for root, dirs, files in os.walk(folder):
         for file in files:
-            if file.endswith(".safetensors"):
+            if file.endswith(".safetensors") or file.endswith(".ckpt"):
                 file_path = os.path.join(root, file)
                 folder_name = os.path.relpath(root, folder)
                 file_name = os.path.splitext(file)[0]
@@ -359,13 +359,9 @@ def save_image_to_path(image, file_path):
 
         # イメージを指定したパスに保存
         image.save(file_path)
-        print(f"########################################################")
         print(f"Image saved successfully to {file_path}")
-        print(f"########################################################")
     except Exception as e:
-        print(f"########################################################")
         print(f"An error occurred while saving the image: {e}")
-        print(f"########################################################")
     
 def get_config_path(now_str:str) -> Path:
     config_dir = Path("./config/from_ui")
