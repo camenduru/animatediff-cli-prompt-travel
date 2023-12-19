@@ -16,7 +16,7 @@ import shutil
 
 # Define the function signature
 def execute_wrapper(
-      url: str, 
+      url: str, fps: int,
       inp_model: str, inp_mm: str,
       inp_sche: str, inp_step: int, inp_cfg: float, 
       inp_posi: str, inp_neg: str, 
@@ -58,7 +58,7 @@ def execute_wrapper(
         dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
     )
 
-    yield from execute_impl(now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
+    yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists, is_test=is_test, is_refine=is_refine, bg_config=bg_config)
 
     end_time = time.time()
     execution_time = end_time - start_time
@@ -70,7 +70,8 @@ def execute_impl(now_str:str,
                  delete_if_exists: bool, 
                  is_test: bool,
                  is_refine: bool, 
-                 bg_config: str):
+                 bg_config: str,
+                 fps:int):
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
     if bg_config is not None:
@@ -101,7 +102,7 @@ def execute_impl(now_str:str,
             print(f"Delete folder and create again")
             shutil.rmtree(stylize_dir)
         # create_config(org_movie=video,config_org=config,fps=15)
-        !animatediff stylize create-config {video}
+        !animatediff stylize create-config {video} -f {fps}
         # create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
         !animatediff stylize create-mask {stylize_dir} -nc
 
@@ -112,18 +113,18 @@ def execute_impl(now_str:str,
     yield 'generating fg bg video...', video, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
 
     if is_test:
-  #      generate(stylize_dir=stylize_fg_dir, length=16)
-        !animatediff stylize generate {stylize_fg_dir} -L 16
+        generate(stylize_dir=stylize_fg_dir, length=16)
+        # !animatediff stylize generate {stylize_fg_dir} -L 16
         if bg_config is not None:
-            # generate(stylize_dir=stylize_bg_dir, length=16)
-            !animatediff stylize generate {stylize_bg_dir} -L 16
+            generate(stylize_dir=stylize_bg_dir, length=16)
+            # !animatediff stylize generate {stylize_bg_dir} -L 16
 
     else:
-        # generate(stylize_dir=stylize_fg_dir)
-        !animatediff stylize generate {stylize_fg_dir}
+        generate(stylize_dir=stylize_fg_dir)
+        # !animatediff stylize generate {stylize_fg_dir}
         if bg_config is not None:
-            # generate(stylize_dir=stylize_bg_dir)
-            !animatediff stylize generate {stylize_bg_dir}
+            generate(stylize_dir=stylize_bg_dir)
+            # !animatediff stylize generate {stylize_bg_dir}
             
     video2 = find_last_folder_and_mp4_file(stylize_fg_dir)
     print(f"video2: {video2}")
@@ -132,8 +133,8 @@ def execute_impl(now_str:str,
         yield 'refining fg video', video, video2, None, None, gr.Button("Generating...", scale=1, interactive=False)
 
         result_dir = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-#        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
-        !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
+        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
+        # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
         video3 = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
         print(f"video3: {video3}")
         yield 'compositing video', video, video2, video3, None, gr.Button("Generate Video", scale=1, interactive=False)
@@ -194,7 +195,9 @@ def launch():
         with gr.Row():
             with gr.Column():
                 with gr.Group():
-                    url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", placeholder="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL")
+                    with gr.Group():
+                        url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", placeholder="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL", scale=3)
+                        fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps", scale=1)
                     with gr.Group():
                         with gr.Row():
                             inp_model = gr.Dropdown(choices=safetensor_files, label="Model")
@@ -210,19 +213,19 @@ def launch():
                         with gr.Group():
                             with gr.Row():
                                 inp_lora1 = gr.Dropdown(choices=lora_files, label="Lora1", scale=3)
-                                inp_lora1_step = gr.Slider(minimum=0.1, maximum=3, step=0.1, value=1.0, label="LoRA1 Scale", scale=1)
+                                inp_lora1_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA1 Scale", scale=1)
                         with gr.Group():
                             with gr.Row():
                                 inp_lora2 = gr.Dropdown(choices=lora_files, label="Lora2", scale=3)
-                                inp_lora2_step = gr.Slider(minimum=0.1, maximum=3, step=0.1, value=1.0, label="LoRA2 Scale", scale=1)
+                                inp_lora2_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA2 Scale", scale=1)
                         with gr.Group():
                             with gr.Row():
                                 inp_lora3 = gr.Dropdown(choices=lora_files, label="Lora3", scale=3)
-                                inp_lora3_step = gr.Slider(minimum=0.1, maximum=3, step=0.1, value=1.0, label="LoRA3 Scale", scale=1)
+                                inp_lora3_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA3 Scale", scale=1)
                         with gr.Group():
                             with gr.Row():
                                 inp_lora4 = gr.Dropdown(choices=lora_files, label="Lora4", scale=3)
-                                inp_lora4_step = gr.Slider(minimum=0.1, maximum=3, step=0.1, value=1.0, label="LoRA4 Scale", scale=1)
+                                inp_lora4_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA4 Scale", scale=1)
 
                     with gr.Accordion("ControlNet", open=False):
                     # with gr.Group():
@@ -268,7 +271,7 @@ def launch():
                         o_video4 = gr.Video(width=256, label="Generated Video", show_share_button=True)
         
         btn.click(fn=execute_wrapper,
-                  inputs=[url, 
+                  inputs=[url, fps,
                           inp_model, inp_mm,
                           inp_sche, inp_step, inp_cfg, 
                           inp_posi, inp_neg, 
@@ -294,6 +297,8 @@ def launch():
 
     while True:
         pass
+
+launch()
 
 if __name__ == "__main__":
     launch()
