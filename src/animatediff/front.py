@@ -272,11 +272,11 @@ def launch():
                 with gr.Group():
                     o_status = gr.Label(value="Not Started Yet", label="Status")
                     with gr.Row():
-                        o_video1 = gr.Video(width=256, label="Original Video", show_share_button=True)
-                        o_video2 = gr.Video(width=256, label="Front Video", show_share_button=True)
+                        o_video1 = gr.Video(width=256, label="Original Video")
+                        o_video2 = gr.Video(width=256, label="Front Video")
                     with gr.Row():
-                        o_video3 = gr.Video(width=256, label="Refined Front Video", show_share_button=True)
-                        o_video4 = gr.Video(width=256, label="Generated Video", show_share_button=True)
+                        o_video3 = gr.Video(width=256, label="Refined Front Video")
+                        o_video4 = gr.Video(width=256, label="Generated Video")
         
         btn.click(fn=execute_wrapper,
                   inputs=[url, fps,
