@@ -105,10 +105,10 @@ def execute_impl(now_str:str,
         if stylize_dir.exists():
             print(f"Delete folder and create again")
             shutil.rmtree(stylize_dir)
-        # create_config(org_movie=video,config_org=config,fps=15)
-        !animatediff stylize create-config {video} -f {fps}
-        # create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
-        !animatediff stylize create-mask {stylize_dir} -nc
+        create_config(org_movie=video,config_org=config,fps=15)
+        # !animatediff stylize create-config {video} -f {fps}
+        create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
+        # !animatediff stylize create-mask {stylize_dir} -nc
 
     update_config(now_str, stylize_dir, stylize_fg_dir)
     config = get_config_path(now_str)
@@ -117,18 +117,18 @@ def execute_impl(now_str:str,
     yield 'generating fg bg video...', video, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
 
     if is_test:
-  #      generate(stylize_dir=stylize_fg_dir, length=16)
-        !animatediff stylize generate {stylize_fg_dir} -L 16
+        generate(stylize_dir=stylize_fg_dir, length=16)
+        # !animatediff stylize generate {stylize_fg_dir} -L 16
         if bg_config is not None:
-            # generate(stylize_dir=stylize_bg_dir, length=16)
-            !animatediff stylize generate {stylize_bg_dir} -L 16
+            generate(stylize_dir=stylize_bg_dir, length=16)
+            # !animatediff stylize generate {stylize_bg_dir} -L 16
 
     else:
-        # generate(stylize_dir=stylize_fg_dir)
-        !animatediff stylize generate {stylize_fg_dir}
+        generate(stylize_dir=stylize_fg_dir)
+        # !animatediff stylize generate {stylize_fg_dir}
         if bg_config is not None:
-            # generate(stylize_dir=stylize_bg_dir)
-            !animatediff stylize generate {stylize_bg_dir}
+            generate(stylize_dir=stylize_bg_dir)
+            # !animatediff stylize generate {stylize_bg_dir}
             
     video2 = find_last_folder_and_mp4_file(stylize_fg_dir)
     print(f"video2: {video2}")
@@ -137,8 +137,8 @@ def execute_impl(now_str:str,
         yield 'refining fg video', video, video2, None, None, gr.Button("Generating...", scale=1, interactive=False)
 
         result_dir = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-#        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
-        !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
+        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
+        # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
         video3 = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
         print(f"video3: {video3}")
         yield 'compositing video', video, video2, video3, None, gr.Button("Generate Video", scale=1, interactive=False)
@@ -158,12 +158,12 @@ def execute_impl(now_str:str,
         print(f"bg_dir: {stylize_bg_dir/'00_img2img'}")
 
     if bg_config is not None:
-        # final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
-        !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}  
+        final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
+        # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}  
     else:
         bg_result = stylize_bg_dir/'00_img2img'
-        # final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
-        !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}
+        final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
+        # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}
 
     fg_result = find_and_get_composite_video(stylize_dir)
     print(f"final_video_dir: {fg_result}")
@@ -171,7 +171,7 @@ def execute_impl(now_str:str,
     final_dir = os.path.dirname(fg_result)
     new_file_path = os.path.join(final_dir,  video_name + ".mp4")
     
-#    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
+    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
 
     try:
         create_video(video, fg_result, new_file_path)
