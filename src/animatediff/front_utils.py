@@ -238,6 +238,8 @@ def create_config_by_gui(
     inp_lora2: str, inp_lora2_step: float,
     inp_lora3: str, inp_lora3_step: float,
     inp_lora4: str, inp_lora4_step: float,
+    mo1_ch: str, mo1_scale: float,
+    mo2_ch: str, mo2_scale: float,
     ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
@@ -310,6 +312,11 @@ def create_config_by_gui(
             "region": ["0"],
             "scale": {"0": inp_lora4_step}
         }})
+    
+    if mo1_ch is not None and len(mo1_ch) > 0:
+        model_config.motion_lora_map[mo1_ch] = mo1_scale
+    if mo2_ch is not None and len(mo2_ch) > 0:
+        model_config.motion_lora_map[mo2_ch] = mo2_scale
     
     model_config.controlnet_map["input_image_dir"] = stylize_dir/'00_controlnet_image'
     model_config.img2img_map["init_img_dir"] = stylize_dir/'00_img2img'
@@ -399,3 +406,35 @@ def update_config(now_str:str, stylize_dir, stylize_fg_dir):
     config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 
 
+# class ModelConfig(BaseSettings):
+#     name: str = Field(...)  # Config name, not actually used for much of anything
+#     path: Path = Field(...)  # Path to the model
+#     vae_path: str = ""  # Path to the model
+#     motion_module: Path = Field(...)  # Path to the motion module
+#     context_schedule: str = "uniform"
+#     lcm_map: Dict[str,Any]= Field({})
+#     gradual_latent_hires_fix_map: Dict[str,Any]= Field({})
+#     compile: bool = Field(False)  # whether to compile the model with TorchDynamo
+#     tensor_interpolation_slerp: bool = Field(True)
+#     seed: list[int] = Field([])  # Seed(s) for the random number generators
+#     scheduler: DiffusionScheduler = Field(DiffusionScheduler.k_dpmpp_2m)  # Scheduler to use
+#     steps: int = 25  # Number of inference steps to run
+#     guidance_scale: float = 7.5  # CFG scale to use
+#     unet_batch_size: int = 1
+#     clip_skip: int = 1  # skip the last N-1 layers of the CLIP text encoder
+#     prompt_fixed_ratio: float = 0.5
+#     head_prompt: str = ""
+#     prompt_map: Dict[str,str]= Field({})
+#     tail_prompt: str = ""
+#     n_prompt: list[str] = Field([])  # Anti-prompt(s) to use
+#     is_single_prompt_mode : bool = Field(False)
+#     lora_map: Dict[str,Any]= Field({})
+#     motion_lora_map: Dict[str,float]= Field({})
+#     ip_adapter_map: Dict[str,Any]= Field({})
+#     img2img_map: Dict[str,Any]= Field({})
+#     region_map: Dict[str,Any]= Field({})
+#     controlnet_map: Dict[str,Any]= Field({})
+#     upscale_config: Dict[str,Any]= Field({})
+#     stylize_config: Dict[str,Any]= Field({})
+#     output: Dict[str,Any]= Field({})
+#     result: Dict[str,Any]= Field({})

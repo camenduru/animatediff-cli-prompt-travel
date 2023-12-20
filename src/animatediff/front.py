@@ -24,9 +24,11 @@ def execute_wrapper(
       inp_lora2: str, inp_lora2_step: float,
       inp_lora3: str, inp_lora3_step: float,
       inp_lora4: str, inp_lora4_step: float,
+      mo1_ch: str, mo1_scale: float,
+      mo2_ch: str, mo2_scale: float,
       ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
-      dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
+      dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       delete_if_exists: bool, is_test: bool, is_refine: bool,
       progress=gr.Progress(track_tqdm=True)):
     
@@ -53,6 +55,8 @@ def execute_wrapper(
         inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
         inp_lora3=inp_lora3, inp_lora3_step=inp_lora3_step,
         inp_lora4=inp_lora4, inp_lora4_step=inp_lora4_step,
+        mo1_ch=mo1_ch, mo1_scale=mo1_scale,
+        mo2_ch=mo2_ch, mo2_scale=mo2_scale,
         ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,
         ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
         dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
@@ -113,18 +117,18 @@ def execute_impl(now_str:str,
     yield 'generating fg bg video...', video, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
 
     if is_test:
-        generate(stylize_dir=stylize_fg_dir, length=16)
-        # !animatediff stylize generate {stylize_fg_dir} -L 16
+  #      generate(stylize_dir=stylize_fg_dir, length=16)
+        !animatediff stylize generate {stylize_fg_dir} -L 16
         if bg_config is not None:
-            generate(stylize_dir=stylize_bg_dir, length=16)
-            # !animatediff stylize generate {stylize_bg_dir} -L 16
+            # generate(stylize_dir=stylize_bg_dir, length=16)
+            !animatediff stylize generate {stylize_bg_dir} -L 16
 
     else:
-        generate(stylize_dir=stylize_fg_dir)
-        # !animatediff stylize generate {stylize_fg_dir}
+        # generate(stylize_dir=stylize_fg_dir)
+        !animatediff stylize generate {stylize_fg_dir}
         if bg_config is not None:
-            generate(stylize_dir=stylize_bg_dir)
-            # !animatediff stylize generate {stylize_bg_dir}
+            # generate(stylize_dir=stylize_bg_dir)
+            !animatediff stylize generate {stylize_bg_dir}
             
     video2 = find_last_folder_and_mp4_file(stylize_fg_dir)
     print(f"video2: {video2}")
@@ -133,8 +137,8 @@ def execute_impl(now_str:str,
         yield 'refining fg video', video, video2, None, None, gr.Button("Generating...", scale=1, interactive=False)
 
         result_dir = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
-        # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
+#        refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
+        !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
         video3 = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
         print(f"video3: {video3}")
         yield 'compositing video', video, video2, video3, None, gr.Button("Generate Video", scale=1, interactive=False)
@@ -184,7 +188,8 @@ def launch():
     mm_files = find_safetensor_files("data/motion_modules")
     schedulers = get_schedulers()
     ip_choice = ["full_face", "plus_face", "plus", "light"]
-
+    ml_files = find_safetensor_files("data/motion_lora")
+    
     with gr.Blocks() as iface:
         with gr.Row():
             gr.Markdown(
@@ -196,8 +201,9 @@ def launch():
             with gr.Column():
                 with gr.Group():
                     with gr.Group():
-                        url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", placeholder="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL", scale=3)
-                        fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps", scale=1)
+                        with gr.Row():
+                            url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", placeholder="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL", scale=3)
+                            fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps", scale=1)
                     with gr.Group():
                         with gr.Row():
                             inp_model = gr.Dropdown(choices=safetensor_files, label="Model")
@@ -227,31 +233,33 @@ def launch():
                                 inp_lora4 = gr.Dropdown(choices=lora_files, label="Lora4", scale=3)
                                 inp_lora4_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA4 Scale", scale=1)
 
-                    with gr.Accordion("ControlNet", open=False):
-                    # with gr.Group():
+                    with gr.Accordion("Motion Lora", open=False):
+                        with gr.Row():
+                            mo1_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA1", scale=3)
+                            mo1_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA1 scale")
+                        with gr.Row():
+                            mo2_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA2", scale=3)
+                            mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale")
+                        
+                    with gr.Accordion("ControlNet", open=True):
                         ip_ch = gr.Checkbox(label="IPAdapter", value=False)
                         ip_image = gr.Image(height=256, type="pil", interactive=False)
                         # ip_upload = gr.UploadButton(label='Click to uplaod Image', file_types=["image"], file_count="single")
                         with gr.Row():
-                            ip_scale = gr.Slider(minimum=0, maximum=3, step=0.1, value=0.5, label="IPAdapter scale", interactive=False)
+                            ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="IPAdapter scale", interactive=False)
                             ip_type = gr.Radio(choices=ip_choice, label="IPAdapter Type", value="plus_face", interactive=False)
-
-                    # with gr.Group():
                         with gr.Row():
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
-                            ad_scale = gr.Slider(minimum=0, maximum=3,  step=0.1, value=0.8, label="AnimateDiff Controlnet scale")
-                    # with gr.Group():
+                            ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet scale")
                         with gr.Row():
                             op_ch = gr.Checkbox(label="Open Pose", value=True)
-                            op_scale = gr.Slider(minimum=0, maximum=3,  step=0.1, value=1.0, label="Open Pose scale")
-                    # with gr.Group():
+                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Open Pose scale")
                         with gr.Row():
                             dp_ch = gr.Checkbox(label="Depth", value=False)
-                            dp_scale = gr.Slider(minimum=0, maximum=3,  step=0.1, value=1.0, label="Depth scale", interactive=False)
-                    # with gr.Group():
+                            dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Depth scale", interactive=False)
                         with gr.Row():
                             la_ch = gr.Checkbox(label="Lineart", value=False)
-                            la_scale = gr.Slider(minimum=0, maximum=3,  step=0.1, value=1.0, label="Lineart scale", interactive=False)
+                            la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Lineart scale", interactive=False)
                                 
                  #   inp2 = gr.Dropdown(choices=result_list, info="please select", label="Config")
                     with gr.Row():
@@ -279,6 +287,8 @@ def launch():
                           inp_lora2, inp_lora2_step,
                           inp_lora3, inp_lora3_step,
                           inp_lora4, inp_lora4_step,
+                          mo1_ch, mo1_scale,
+                          mo2_ch, mo2_scale,
                           ip_ch, ip_image, ip_scale, ip_type,
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
@@ -297,8 +307,6 @@ def launch():
 
     while True:
         pass
-
-launch()
 
 if __name__ == "__main__":
     launch()
