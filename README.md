@@ -1,4 +1,5 @@
 # AnimateDiff-V2V-GUI
+![image](https://github.com/JojoYay/animatediff-cli-prompt-travel/assets/43402296/1023d0fa-3614-4556-a5e2-91f54186dd69)
 
 I have forked AnimateDiff prompt travel to add front GUI
 to do that, actually I have updated all those folder names etc
