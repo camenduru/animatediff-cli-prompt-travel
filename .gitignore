@@ -239,3 +239,6 @@ src/animatediff/_version.py
 # envrc
 .env*
 !.envrc.example
+
+#mp3
+*.mp3
