@@ -192,7 +192,12 @@ def load_video_name(url):
 def get_last_sorted_subfolder(base_folder):
     subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
     sorted_subfolders = sorted(subfolders, key=lambda folder: os.path.basename(folder), reverse=True)
-    # print(f"sorted_subfolders: {sorted_subfolders}")
+    last_sorted_subfolder = sorted_subfolders[0] if sorted_subfolders else None
+    return last_sorted_subfolder
+
+def get_first_sorted_subfolder(base_folder):
+    subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
+    sorted_subfolders = sorted(subfolders, key=lambda folder: os.path.basename(folder), reverse=False)
     last_sorted_subfolder = sorted_subfolders[0] if sorted_subfolders else None
     return last_sorted_subfolder
 
@@ -323,7 +328,7 @@ def create_config_by_gui(
     
     model_config.controlnet_map["max_samples_on_vram"] = 0
     model_config.controlnet_map["max_models_on_vram"] = 0
-    model_config.controlnet_map["save_detectmap"] = False
+    model_config.controlnet_map["save_detectmap"] = True
     
     model_config.img2img_map["save_init_image"] = False
     
@@ -350,25 +355,26 @@ def create_config_by_gui(
     save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 
 def save_image_to_path(image, file_path):
-    try:
-        # 保存前にフォルダ内のデータを削除
-        folder_path = os.path.dirname(file_path)
-        if os.path.exists(folder_path):
-            for file_name in os.listdir(folder_path):
-                file_path_to_delete = os.path.join(folder_path, file_name)
-                try:
-                    if os.path.isfile(file_path_to_delete):
-                        os.unlink(file_path_to_delete)
-                    elif os.path.isdir(file_path_to_delete):
-                        os.rmdir(file_path_to_delete)
-                except Exception as e:
-                    print(f"Failed to delete {file_path_to_delete}: {e}")
+    if image is not None:
+        try:
+            # 保存前にフォルダ内のデータを削除
+            folder_path = os.path.dirname(file_path)
+            if os.path.exists(folder_path):
+                for file_name in os.listdir(folder_path):
+                    file_path_to_delete = os.path.join(folder_path, file_name)
+                    try:
+                        if os.path.isfile(file_path_to_delete):
+                            os.unlink(file_path_to_delete)
+                        elif os.path.isdir(file_path_to_delete):
+                            os.rmdir(file_path_to_delete)
+                    except Exception as e:
+                        print(f"Failed to delete {file_path_to_delete}: {e}")
 
-        # イメージを指定したパスに保存
-        image.save(file_path)
-        print(f"Image saved successfully to {file_path}")
-    except Exception as e:
-        print(f"An error occurred while saving the image: {e}")
+            # イメージを指定したパスに保存
+            image.save(file_path)
+            print(f"Image saved successfully to {file_path}")
+        except Exception as e:
+            print(f"An error occurred while saving the image: {e}")
     
 def get_config_path(now_str:str) -> Path:
     config_dir = Path("./config/from_ui")

@@ -89,7 +89,7 @@
         "input_image_dir": "../stylize/real_base2-dance00023/00_controlnet_image",
         "max_samples_on_vram": 0,
         "max_models_on_vram": 0,
-        "save_detectmap": false,
+        "save_detectmap": true,
         "preprocess_on_gpu": true,
         "is_loop": false,
         "controlnet_tile": {
