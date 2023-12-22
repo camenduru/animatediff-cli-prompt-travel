@@ -60,6 +60,20 @@ def create_file_list(folder_path):
             file_list.append(file_name)
     return file_list
 
+def get_stylize_dir(video_name:str)-> Path:
+    stylize_dir='stylize/' + video_name
+    return Path(stylize_dir)
+
+def get_fg_dir(video_name:str) -> Path:
+    fg_folder_name = 'fg_00_'+video_name
+    return get_stylize_dir(video_name) / fg_folder_name
+
+def get_mask_dir(video_name:str) -> Path:
+    return get_fg_dir(video_name) / '00_mask'
+
+def get_bg_dir(video_name:str) -> Path:
+    bg_folder_name = 'bg_' + video_name
+    return get_stylize_dir(video_name) / bg_folder_name
 
 def find_safetensor_files(folder, suffix=''):
     result_list = []
@@ -89,7 +103,7 @@ def find_safetensor_files(folder, suffix=''):
     return result_list
     
 def find_last_folder_and_mp4_file(folder_path):
-    subfolders = sorted([f.path for f in os.scandir(folder_path) if f.is_dir()], key=lambda x: os.path.basename(x))
+    subfolders = sorted([f.path for f in os.scandir(folder_path) if f.is_dir() and f.name[0].isdigit()], key=lambda x: os.path.basename(x))
     last_folder = subfolders[-1]
     mp4_files = glob.glob(os.path.join(last_folder, '*.mp4'))
     if mp4_files:
@@ -190,13 +204,13 @@ def load_video_name(url):
         return new_video_name
 
 def get_last_sorted_subfolder(base_folder):
-    subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
+    subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir() and f.name[0].isdigit()]
     sorted_subfolders = sorted(subfolders, key=lambda folder: os.path.basename(folder), reverse=True)
     last_sorted_subfolder = sorted_subfolders[0] if sorted_subfolders else None
     return last_sorted_subfolder
 
 def get_first_sorted_subfolder(base_folder):
-    subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir()]
+    subfolders = [f.path for f in os.scandir(base_folder) if f.is_dir() and f.name[0].isdigit()]
     sorted_subfolders = sorted(subfolders, key=lambda folder: os.path.basename(folder), reverse=False)
     last_sorted_subfolder = sorted_subfolders[0] if sorted_subfolders else None
     return last_sorted_subfolder
@@ -381,10 +395,12 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, stylize_dir, stylize_fg_dir):
+def update_config(now_str:str, video_name:str, mask_ch:str):
     config_path = get_config_path(now_str)
-    
     model_config: ModelConfig = get_model_config(config_path)
+    stylize_dir = get_stylize_dir(video_name)
+    stylize_fg_dir = get_fg_dir(video_name)
+    
     img2img_dir = stylize_dir/"00_img2img"
     img = Image.open( img2img_dir.joinpath("00000000.png") )
     W, H = img.size
@@ -407,8 +423,8 @@ def update_config(now_str:str, stylize_dir, stylize_fg_dir):
                 "overlap": 4,
                 "stride": 0
             }
-    fg_config_path = stylize_fg_dir/'prompt.json'
-    fg_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
+    actual_config_path = stylize_fg_dir/'prompt.json' if mask_ch != "As is Base" else stylize_dir/'prompt.json'
+    actual_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
     config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 
 

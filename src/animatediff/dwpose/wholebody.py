@@ -10,7 +10,8 @@ from .onnxpose import inference_pose
 class Wholebody:
     def __init__(self, device='cuda:0'):
         providers = ['CPUExecutionProvider'
-                 ] if device == 'cpu' else ['CUDAExecutionProvider']
+                 # ] if device == 'cpu' else ['CUDAExecutionProvider']
+                 ] if device == 'cpu' else ['AzureExecutionProvider']
         onnx_det = 'data/models/DWPose/yolox_l.onnx'
         onnx_pose = 'data/models/DWPose/dw-ll_ucoco_384.onnx'
 

@@ -49,7 +49,8 @@ class Tagger:
         if is_cpu:
             self.model = onnxruntime.InferenceSession("data/models/WD14tagger/model.onnx", providers=['CPUExecutionProvider'])
         else:
-            self.model = onnxruntime.InferenceSession("data/models/WD14tagger/model.onnx", providers=['CUDAExecutionProvider'])
+            # self.model = onnxruntime.InferenceSession("data/models/WD14tagger/model.onnx", providers=['CUDAExecutionProvider'])
+            self.model = onnxruntime.InferenceSession("data/models/WD14tagger/model.onnx", providers=['AzureExecutionProvider'])
         df = pd.read_csv("data/models/WD14tagger/selected_tags.csv")
         self.tag_names = df["name"].tolist()
         self.rating_indexes = list(np.where(df["category"] == 9)[0])

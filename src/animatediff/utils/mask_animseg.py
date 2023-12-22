@@ -25,8 +25,8 @@ def animseg_create_fg(frame_dir, output_dir, output_mask_dir, masked_area_list,
         kernel = np.ones((abs(mask_padding),abs(mask_padding)),np.uint8)
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
-
-    providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+    # providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+    providers = ['AzureExecutionProvider', 'CPUExecutionProvider']
     rmbg_model = rt.InferenceSession("data/models/anime_seg/isnetis.onnx", providers=providers)
 
     def get_mask(img, s=1024):

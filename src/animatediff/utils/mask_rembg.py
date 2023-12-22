@@ -24,7 +24,8 @@ def rembg_create_fg(frame_dir, output_dir, output_mask_dir, masked_area_list,
         kernel = np.ones((abs(mask_padding),abs(mask_padding)),np.uint8)
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
-    session = new_session(providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    # session = new_session(providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    session = new_session(providers=['AzureExecutionProvider', 'CPUExecutionProvider'])
 
     for i, frame in tqdm(enumerate(frame_list),total=len(frame_list), desc=f"creating mask"):
         frame = Path(frame)
