@@ -159,7 +159,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
             detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
         else:
-            generate(stylize_dir=stylize_fg_dir, length=16)
+            generate(stylize_dir=stylize_dir, length=16)
             # !animatediff stylize generate {stylize_dir} -L 16
             front_video = find_last_folder_and_mp4_file(stylize_dir)
             detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
@@ -173,7 +173,8 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
             detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
         else:
-            generate(stylize_dir=stylize_fg_dir)
+            print(f"generate {stylize_dir} start")
+            generate(stylize_dir=stylize_dir)
             # !animatediff stylize generate {stylize_dir}
             front_video = find_last_folder_and_mp4_file(stylize_dir)
             detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
