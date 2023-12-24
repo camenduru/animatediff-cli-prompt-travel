@@ -96,13 +96,6 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
     yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
         
     video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-    # stylize_dir='stylize/' + video_name
-    # stylize_fg_dir = stylize_dir + '/fg_00_'+video_name
-    # mask_dir = Path(stylize_fg_dir + '/00_mask')
-    # stylize_fg_dir = Path(stylize_fg_dir)
-    # stylize_bg_dir = stylize_dir + '/bg_'+video_name
-    # stylize_bg_dir = Path(stylize_bg_dir)
-    # stylize_dir = Path(stylize_dir)
 
     stylize_dir = get_stylize_dir(video_name)
     stylize_fg_dir = get_fg_dir(video_name)
@@ -207,26 +200,31 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
                 openpose_video = filename
     
     if is_refine:
+        cur_width = model_config.stylize_config["0"]["width"]
+        print(f"cur_width {cur_width}")
+        new_width = int(float(cur_width) * float(1.5))
+        print(f"refine width {new_width}")
         yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
         if mask_ch != "As is Base":
             result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-            print(f"Start: Refine {result_dir}")
-            refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
+            print(f"Start: Refine {result_dir} -width {new_width}")
+            refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
             # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
             front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
             print(f"video3: {front_video}")
-            fg_result = get_last_sorted_subfolder(get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
+            fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
+            print(f"aaaaaaaa{fg_result}")
             if mask_ch == 'Nothing Base':
                 semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
         else:
             result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-            print(f"Start: Refine {result_dir}")
-            refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=768)
+            print(f"Start: Refine {result_dir} -width {new_width}")
+            refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
             # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W 768
-            front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_dir))
+            front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
             print(f"video3: {front_video}")
-            fg_result = get_last_sorted_subfolder(get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir)))
-            semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_dir))
+            fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
+            semi_final_video = front_video
     else:
         if mask_ch != "As is Base":
             fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))

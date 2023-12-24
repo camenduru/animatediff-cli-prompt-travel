@@ -39,7 +39,7 @@ python -m pip install --upgrade pip
 python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 python -m pip install -e .
 #boot GUI
-python /src/animatediff/front.py
+python src/animatediff/front.py
 
 ```
 ### Paperspace
