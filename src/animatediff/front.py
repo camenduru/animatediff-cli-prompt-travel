@@ -10,6 +10,11 @@ from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
 from animatediff.generate import save_output
 
+from animatediff.stylize import generate, create_config, create_mask, composite
+from animatediff.cli import refine
+
+
+
 import io
 import os
 import time
@@ -119,7 +124,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         if stylize_dir.exists():
             print(f"Delete folder and create again")
             shutil.rmtree(stylize_dir)
-        create_config(org_movie=video,config_org=config,fps=15)
+        create_config(org_movie=video, fps=15)
         # !animatediff stylize create-config {video} -f {fps}
     
     if not stylize_fg_dir.exists() and mask_ch != "As is Base":
