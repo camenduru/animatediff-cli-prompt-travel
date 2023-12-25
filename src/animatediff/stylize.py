@@ -77,7 +77,7 @@ def create_config(
             exists=True,
             help="Path to original config file",
         ),
-    ] = Path("config/prompts/stylize_base.json"),
+    ] = Path("config/fix/real_base2.json"),
     ignore_list: Annotated[
         Path,
         typer.Option(
