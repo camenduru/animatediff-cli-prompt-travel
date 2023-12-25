@@ -94,8 +94,10 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
     final_video = None
     
     yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-        
-    video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
+    separator = os.path.sep
+    video_name = os.path.splitext(os.path.normpath(video.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
+
+    # video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
 
     stylize_dir = get_stylize_dir(video_name)
     stylize_fg_dir = get_fg_dir(video_name)
