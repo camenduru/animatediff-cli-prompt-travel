@@ -98,7 +98,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
     video_name = os.path.splitext(os.path.normpath(video.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
 
     # video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-
+    video = Path(video)
     stylize_dir = get_stylize_dir(video_name)
     stylize_fg_dir = get_fg_dir(video_name)
     mask_dir = get_mask_dir(video_name)
