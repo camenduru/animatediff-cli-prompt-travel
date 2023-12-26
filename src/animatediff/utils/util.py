@@ -501,7 +501,7 @@ def prepare_softsplat():
 
 def extract_frames(movie_file_path, fps, out_dir, aspect_ratio, duration, offset, size_of_short_edge=-1, low_vram_mode=False):
     import ffmpeg
-
+    print(f"movie_file_path: {movie_file_path}")
     probe = ffmpeg.probe(movie_file_path)
     video = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
     width = int(video['width'])
