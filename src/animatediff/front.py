@@ -119,7 +119,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         if stylize_dir.exists():
             print(f"Delete folder and create again")
             shutil.rmtree(stylize_dir)
-        create_config(org_movie=video, fps=15)
+        create_config(org_movie=video, fps=fps)
         # !animatediff stylize create-config {video} -f {fps}
     
     if not stylize_fg_dir.exists() and mask_ch != "As is Base":
