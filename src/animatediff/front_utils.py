@@ -62,7 +62,7 @@ def create_file_list(folder_path):
 
 def get_stylize_dir(video_name:str)-> Path:
     stylize_dir='stylize/' + video_name
-    return Path(stylize_dir)
+    return Path(Path(stylize_dir).resolve())
 
 def get_fg_dir(video_name:str) -> Path:
     fg_folder_name = 'fg_00_'+video_name
