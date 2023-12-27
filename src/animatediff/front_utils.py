@@ -246,11 +246,10 @@ def create_config_by_gui(
     now_str:str,
     video:str,
     stylize_dir: Path, 
-    model: str, 
-    motion_module: str, 
-    scheduler: str, 
-    step: int, 
-    cfg: float, 
+    model: str, vae: str,
+    motion_module: str, context:str, scheduler: str, 
+    is_lcm: bool, is_hires: bool,
+    step: int, cfg: float, 
     head_prompt:str,
     neg_prompt:str,
     inp_lora1: str, inp_lora1_step: float,
@@ -274,11 +273,29 @@ def create_config_by_gui(
     model_config.name = now_str
     model_config.path = Path(model)
     model_config.motion_module = Path(motion_module)
+    model_config.vae_path = vae
+    model_config.context_schedule = context
     model_config.steps = step
     model_config.guidance_scale = cfg
     model_config.scheduler = scheduler
     model_config.head_prompt = head_prompt
     model_config.n_prompt = [neg.strip() for neg in neg_prompt.split(',') if neg]
+    model_config.lcm_map = {
+        "enable": is_lcm,
+        "start_scale": 0.15,
+        "end_scale": 0.75,
+        "gradient_start": 0.2,
+        "gradient_end": 0.75
+    }
+    model_config.gradual_latent_hires_fix_map = {
+        "enable": is_hires,
+        "scale": {
+            "0": 0.5,
+            "0.7": 1.0
+        },
+        "reverse_steps": 5,
+        "noise_add_count": 3
+    }
     model_config.stylize_config = {
             "original_video": {
                 "path": video,

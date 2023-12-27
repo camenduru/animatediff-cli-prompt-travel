@@ -24,8 +24,10 @@ import shutil
 # Define the function signature
 def execute_wrapper(
       url: str, fps: int,
-      inp_model: str, inp_mm: str,
-      inp_sche: str, inp_step: int, inp_cfg: float, 
+      inp_model: str, inp_vae: str, 
+      inp_mm: str, inp_context: str, inp_sche: str, 
+      inp_lcm: bool, inp_hires: bool,
+      inp_step: int, inp_cfg: float,  
       inp_posi: str, inp_neg: str, 
       inp_lora1: str, inp_lora1_step: float,
       inp_lora2: str, inp_lora2_step: float,
@@ -55,8 +57,14 @@ def execute_wrapper(
         now_str=time_str,
         video = saved_file,
         stylize_dir = stylize_dir, 
-        model=inp_model, motion_module=inp_mm, 
-        scheduler=inp_sche, step=inp_step, cfg=inp_cfg, 
+        # model=inp_model, motion_module=inp_mm, 
+        # scheduler=inp_sche, step=inp_step, cfg=inp_cfg, 
+
+        model=inp_model, vae=inp_vae, 
+        motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
+        is_lcm=inp_lcm, is_hires=inp_hires,
+        step=inp_step, cfg=inp_cfg, 
+
         head_prompt=inp_posi, neg_prompt=inp_neg,
         inp_lora1=inp_lora1, inp_lora1_step=inp_lora1_step,
         inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
@@ -211,7 +219,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
             print(f"Start: Refine {result_dir} -width {new_width}")
             refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
-            # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W 768
+            # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W {new_width}
             front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
             print(f"video3: {front_video}")
             fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
@@ -222,7 +230,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
             print(f"Start: Refine {result_dir} -width {new_width}")
             refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
-            # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W 768
+            # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W {new_width}
             front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
             print(f"video3: {front_video}")
             fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
@@ -281,6 +289,8 @@ def launch():
     ip_choice = ["full_face", "plus_face", "plus", "light"]
     ml_files = find_safetensor_files("data/motion_lora")
     bg_choice = ["Original", "Nothing Base", "As is Base"]
+    context_choice = ["uniform", "composite"]
+    vae_choice = find_safetensor_files("data/vae")
     
     with gr.Blocks() as iface:
         with gr.Row():
@@ -299,12 +309,20 @@ def launch():
                     with gr.Group():
                         with gr.Row():
                             inp_model = gr.Dropdown(choices=safetensor_files, label="Model")
-                            inp_mm = gr.Dropdown(choices=mm_files, label="Motion Module")
+                            inp_vae = gr.Dropdown(choices=vae_choice, label="VAE")
                     with gr.Group():
                         with gr.Row():
+                            inp_mm = gr.Dropdown(choices=mm_files, label="Motion Module")
+                            inp_context = gr.Dropdown(choices=context_choice, label="Context", value="uniform")
                             inp_sche = gr.Dropdown(choices=schedulers, label="Sampling Method")
-                            inp_step = gr.Slider(minimum=1, maximum=20, step=1, value=10, label="Sampling Steps")
-                            inp_cfg = gr.Slider(minimum=0.1, maximum=5, step=0.05,  value=2.4, label="CFG Scale")
+                    with gr.Group():
+                        with gr.Row():
+                            inp_lcm = gr.Checkbox(label="LCM", value=True)
+                            inp_hires = gr.Checkbox(label="gradual latent hires fix", value=True)
+                    with gr.Group():
+                        with gr.Row():
+                            inp_step = gr.Slider(minimum=1, maximum=30, step=1, value=10, label="Sampling Steps")
+                            inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=2.4, label="CFG Scale")
                     inp_posi = gr.Textbox(lines=2, value="1girl, beautiful", placeholder="1girl, beautiful", label="Positive Prompt")
                     inp_neg = gr.Textbox(lines=2, value="low quality, low res,", placeholder="low quality, low res,", label="Negative Prompt")
                     with gr.Accordion("LoRAs", open=False):
@@ -380,8 +398,10 @@ def launch():
         
         btn.click(fn=execute_wrapper,
                   inputs=[url, fps,
-                          inp_model, inp_mm,
-                          inp_sche, inp_step, inp_cfg, 
+                          inp_model, inp_vae, 
+                          inp_mm, inp_context, inp_sche, 
+                          inp_lcm, inp_hires,
+                          inp_step, inp_cfg, 
                           inp_posi, inp_neg, 
                           inp_lora1, inp_lora1_step,
                           inp_lora2, inp_lora2_step,
