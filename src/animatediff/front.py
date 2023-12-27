@@ -62,7 +62,7 @@ def execute_wrapper(
         save_folder = 'data/video'
         saved_file = download_video(url, save_folder)
         video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-        stylize_dir= Path('/storage/aj/animatediff-cli-prompt-travel/stylize/' + video_name)
+        stylize_dir= get_stylize_dir(video_name)
         create_config_by_gui(
             now_str=time_str,
             video = saved_file,
