@@ -347,7 +347,7 @@ def launch():
                     with gr.Group():
                         with gr.Row():
                             inp_lcm = gr.Checkbox(label="LCM", value=True)
-                            inp_hires = gr.Checkbox(label="gradual latent hires fix", value=True)
+                            inp_hires = gr.Checkbox(label="gradual latent hires fix", value=False)
                     with gr.Group():
                         with gr.Row():
                             seed = gr.Number(value=-1, label="Seed")
