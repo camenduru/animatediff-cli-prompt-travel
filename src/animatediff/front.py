@@ -12,7 +12,7 @@ from animatediff.generate import save_output
 
 from animatediff.stylize import generate, create_config, create_mask, composite
 from animatediff.cli import refine
-
+import traceback
 
 
 import io
@@ -86,11 +86,11 @@ def execute_wrapper(
         yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
                                 is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1)
     except Exception as inst:
-        yield 'Error: Select Model', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
-        print(type(inst))    # the exception type
-        print(inst.args)     # arguments stored in .args
+        yield 'Runtime Error', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+        # print(type(inst))    # the exception type
+        # print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly,
-        
+        traceback.print_exc()
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"実行時間: {execution_time}秒")
@@ -295,7 +295,11 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         
         yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
     except Exception as e:
-        print(f"error:{e}")
+        # print(f"error:{e}")
+        traceback.print_exc()
+        # print(type(e))    # the exception type
+        # print(e.args)     # arguments stored in .args
+        # print(e)          # __str__ allows args to be printed directly,
         final_video = semi_final_video
         yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
         
