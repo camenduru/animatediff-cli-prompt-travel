@@ -14,6 +14,8 @@ import yt_dlp
 import shutil
 import pytz
 from PIL import Image
+
+from animatediff import __version__, get_dir
 from animatediff.stylize import create_config, create_mask, generate, composite
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.cli import refine
@@ -258,9 +260,11 @@ def create_config_by_gui(
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
 ) -> Path:
+    data_dir = get_dir("data")
     org_config='config/fix/real_base2.json'
     model_config: ModelConfig = get_model_config(org_config)
     # 引数とその値を表示
+    print(f"data_dir: {data_dir}")
     print(f"now_str: {now_str}")
     print(f"video: {video}")
     print(f"stylize_dir: {stylize_dir}")
@@ -389,8 +393,9 @@ def create_config_by_gui(
     if mo2_ch is not None and len(mo2_ch) > 0:
         model_config.motion_lora_map[mo2_ch] = mo2_scale
     
-    model_config.controlnet_map["input_image_dir"] = stylize_dir/'00_controlnet_image'
-    model_config.img2img_map["init_img_dir"] = stylize_dir/'00_img2img'
+    # model_config.controlnet_map["input_image_dir"] = stylize_dir/'00_controlnet_image'
+    model_config.controlnet_map["input_image_dir"] = os.path.relpath(stylize_dir/'00_controlnet_image'.absolute(), data_dir)
+    model_config.img2img_map["init_img_dir"] = os.path.relpath(stylize_dir/'00_img2img'.absolute(), data_dir)
     
     model_config.controlnet_map["max_samples_on_vram"] = 0
     model_config.controlnet_map["max_models_on_vram"] = 0
