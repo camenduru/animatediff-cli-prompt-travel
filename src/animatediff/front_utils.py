@@ -19,11 +19,6 @@ from animatediff.settings import ModelConfig, get_model_config
 from animatediff.cli import refine
 from animatediff.video_utils import create_video
 
-
-def validate_inputs(url):
-    if not url:
-        yield 'Error: URLs input is required.', None, None, None, None, gr.Button("Generate Video", scale=1, interactive=False)
-
 def getNow() -> str:
     singapore_timezone = pytz.timezone('Asia/Singapore')
     time_str = datetime.now(singapore_timezone).strftime("%Y%m%d_%H%M")
@@ -412,7 +407,7 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, video_name:str, mask_ch:str):
+def update_config(now_str:str, video_name:str, mask_ch:bool):
     config_path = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config_path)
     stylize_dir = get_stylize_dir(video_name)
@@ -440,7 +435,7 @@ def update_config(now_str:str, video_name:str, mask_ch:str):
                 "overlap": 4,
                 "stride": 0
             }
-    actual_config_path = stylize_fg_dir/'prompt.json' if mask_ch != "As is Base" else stylize_dir/'prompt.json'
+    actual_config_path = stylize_fg_dir/'prompt.json' if mask_ch else stylize_dir/'prompt.json'
     actual_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
     config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 

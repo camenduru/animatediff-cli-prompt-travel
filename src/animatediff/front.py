@@ -1,6 +1,6 @@
 import gradio as gr
 from animatediff.execute import execute
-from animatediff.front_utils import (get_schedulers, validate_inputs, getNow, download_video, create_file_list,
+from animatediff.front_utils import (get_schedulers, getNow, download_video, create_file_list,
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
                                     create_config_by_gui, get_config_path, update_config, change_ip, change_ad, change_op,
@@ -36,56 +36,67 @@ def execute_wrapper(
       mo1_ch: str, mo1_scale: float,
       mo2_ch: str, mo2_scale: float,
       ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str,
-      mask_ch: str, mask_padding:int,
+      mask_ch1: bool, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       delete_if_exists: bool, is_test: bool, is_refine: bool,
       progress=gr.Progress(track_tqdm=True)):
-    
     yield 'generation Initiated...', None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
     start_time = time.time()
-
     time_str = getNow()
-    validate_inputs(url)
+    try:
+        if url is None:
+            yield 'Error: URL input is required.', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            return
+        if inp_model == []:
+            yield 'Error: Select Model', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            return
+        if inp_mm == []:
+            yield 'Error: Select Motion Module', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            return
+        if inp_sche == []:
+            yield 'Error: Select Sampling Method', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            return
 
-    bg_config = None
-    save_folder = 'data/video'
-    saved_file = download_video(url, save_folder)
-    video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-    stylize_dir= Path('/storage/aj/animatediff-cli-prompt-travel/stylize/' + video_name)
-    create_config_by_gui(
-        now_str=time_str,
-        video = saved_file,
-        stylize_dir = stylize_dir, 
-        # model=inp_model, motion_module=inp_mm, 
-        # scheduler=inp_sche, step=inp_step, cfg=inp_cfg, 
+        bg_config = None
+        save_folder = 'data/video'
+        saved_file = download_video(url, save_folder)
+        video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
+        stylize_dir= Path('/storage/aj/animatediff-cli-prompt-travel/stylize/' + video_name)
+        create_config_by_gui(
+            now_str=time_str,
+            video = saved_file,
+            stylize_dir = stylize_dir, 
+            model=inp_model, vae=inp_vae, 
+            motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
+            is_lcm=inp_lcm, is_hires=inp_hires,
+            step=inp_step, cfg=inp_cfg, 
+            head_prompt=inp_posi, neg_prompt=inp_neg,
+            inp_lora1=inp_lora1, inp_lora1_step=inp_lora1_step,
+            inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
+            inp_lora3=inp_lora3, inp_lora3_step=inp_lora3_step,
+            inp_lora4=inp_lora4, inp_lora4_step=inp_lora4_step,
+            mo1_ch=mo1_ch, mo1_scale=mo1_scale,
+            mo2_ch=mo2_ch, mo2_scale=mo2_scale,
+            ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,
+            ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
+            dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
+        )
 
-        model=inp_model, vae=inp_vae, 
-        motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
-        is_lcm=inp_lcm, is_hires=inp_hires,
-        step=inp_step, cfg=inp_cfg, 
-
-        head_prompt=inp_posi, neg_prompt=inp_neg,
-        inp_lora1=inp_lora1, inp_lora1_step=inp_lora1_step,
-        inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
-        inp_lora3=inp_lora3, inp_lora3_step=inp_lora3_step,
-        inp_lora4=inp_lora4, inp_lora4_step=inp_lora4_step,
-        mo1_ch=mo1_ch, mo1_scale=mo1_scale,
-        mo2_ch=mo2_ch, mo2_scale=mo2_scale,
-        ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,
-        ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
-        dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
-    )
-
-    yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
-                            is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch=mask_ch, mask_padding=mask_padding)
-
+        yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
+                                is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1)
+    except Exception as inst:
+        yield 'Error: Select Model', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+        print(type(inst))    # the exception type
+        print(inst.args)     # arguments stored in .args
+        print(inst)          # __str__ allows args to be printed directly,
+        
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"実行時間: {execution_time}秒")
 
 def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, 
-                 bg_config: str, fps:int, mask_ch:str, mask_padding:int):
+                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int):
     
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
@@ -121,7 +132,8 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
 
     if stylize_dir.exists() and not delete_if_exists:
         print(f"config already exists. skip create-config")
-        if mask_ch != "As is Base":
+        # if mask_ch != "As is Base":
+        if mask_ch1:
             mask_video = mask_dir/'mask.mp4'
     else:
         if stylize_dir.exists():
@@ -130,7 +142,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         create_config(org_movie=video, fps=fps)
         # !animatediff stylize create-config {video} -f {fps}
     
-    if not stylize_fg_dir.exists() and mask_ch != "As is Base":
+    if not stylize_fg_dir.exists() and mask_ch1:
         create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
         # !animatediff stylize create-mask {stylize_dir} -mp {mask_padding} -nc　
         if mask_ch:
@@ -145,7 +157,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
                 None,
             )
         
-    update_config(now_str, video_name,mask_ch)
+    update_config(now_str, video_name,mask_ch1)
     config = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config)       
     
@@ -153,7 +165,8 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
 
     print(f"Start: stylize generate {stylize_fg_dir}")
     if is_test:
-        if mask_ch != "As is Base":
+        # if mask_ch != "As is Base":
+        if mask_ch1:
             generate(stylize_dir=stylize_fg_dir, length=16)
             # !animatediff stylize generate {stylize_fg_dir} -L 16
             if bg_config is not None:
@@ -167,7 +180,8 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             front_video = find_last_folder_and_mp4_file(stylize_dir)
             detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
     else:
-        if mask_ch != "As is Base":
+        # if mask_ch != "As is Base":
+        if mask_ch1:
             generate(stylize_dir=stylize_fg_dir)
             # !animatediff stylize generate {stylize_fg_dir}
             if bg_config is not None:
@@ -215,7 +229,8 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         new_width = int(float(cur_width) * float(1.5))
         print(f"refine width {new_width}")
         yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-        if mask_ch != "As is Base":
+        # if mask_ch != "As is Base":
+        if mask_ch1:
             result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
             print(f"Start: Refine {result_dir} -width {new_width}")
             refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
@@ -224,7 +239,8 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             print(f"video3: {front_video}")
             fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
             print(f"aaaaaaaa{fg_result}")
-            if mask_ch == 'Nothing Base':
+            if mask_type == 'No Background': 
+            # if mask_ch == 'Nothing Base':
                 semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
         else:
             result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
@@ -236,15 +252,18 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
             semi_final_video = front_video
     else:
-        if mask_ch != "As is Base":
+        if mask_ch1:
+        # if mask_ch != "As is Base":
             fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-            if mask_ch == 'Nothing Base':
+            # if mask_ch == 'Nothing Base':
+            if mask_type == 'Nothing Base': 
                 semi_final_video = find_last_folder_and_mp4_file(stylize_fg_dir)
         else:
             fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
             semi_final_video = find_last_folder_and_mp4_file(stylize_dir)
 
-    if mask_ch == "Original":
+    # if mask_ch == "Original":
+    if mask_ch1 and mask_type == 'Original': 
         yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
         bg_result = get_last_sorted_subfolder(stylize_bg_dir)
 
@@ -288,7 +307,8 @@ def launch():
     schedulers = get_schedulers()
     ip_choice = ["full_face", "plus_face", "plus", "light"]
     ml_files = find_safetensor_files("data/motion_lora")
-    bg_choice = ["Original", "Nothing Base", "As is Base"]
+    # bg_choice = ["Original", "Nothing Base", "As is Base"]
+    mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     vae_choice = find_safetensor_files("data/vae")
     
@@ -313,13 +333,14 @@ def launch():
                     with gr.Group():
                         with gr.Row():
                             inp_mm = gr.Dropdown(choices=mm_files, label="Motion Module")
-                            inp_context = gr.Dropdown(choices=context_choice, label="Context", value="uniform")
                             inp_sche = gr.Dropdown(choices=schedulers, label="Sampling Method")
+                            inp_context = gr.Dropdown(choices=context_choice, label="Context", value="uniform")
                     with gr.Group():
                         with gr.Row():
                             inp_lcm = gr.Checkbox(label="LCM", value=True)
                             inp_hires = gr.Checkbox(label="gradual latent hires fix", value=True)
                     with gr.Group():
+                        
                         with gr.Row():
                             inp_step = gr.Slider(minimum=1, maximum=30, step=1, value=10, label="Sampling Steps")
                             inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=2.4, label="CFG Scale")
@@ -351,16 +372,20 @@ def launch():
                             mo2_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA2", scale=3)
                             mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale")
                         
-                    with gr.Accordion("Effects", open=True):
+                    with gr.Accordion("Special Effects", open=True):
                         ip_ch = gr.Checkbox(label="IPAdapter", value=False)
-                        ip_image = gr.Image(height=256, type="pil", interactive=False)
-                        # ip_upload = gr.UploadButton(label='Click to uplaod Image', file_types=["image"], file_count="single")
                         with gr.Row():
-                            ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="IPAdapter scale", interactive=False)
-                            ip_type = gr.Radio(choices=ip_choice, label="IPAdapter Type", value="plus_face", interactive=False)
+                            ip_image = gr.Image(height=256, type="pil", interactive=False)
+                            with gr.Column():
+                                ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="scale", interactive=False)
+                                ip_type = gr.Radio(choices=ip_choice, label="Type", value="plus_face", interactive=False)
                         with gr.Row():
-                            mask_ch = gr.Radio(choices=bg_choice, label="Background Type", value="Original")
-                            mask_padding = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding")
+                            mask_ch1 = gr.Checkbox(label="Mask(Inpaint)", value=False)
+                            mask_type1 = gr.Dropdown(choices=mask_type_choice, label="Type", value="Original" )
+                            mask_padding1 = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding")
+                        # with gr.Row():
+                        #     mask_ch = gr.Radio(choices=bg_choice, label="Background Type", value="Original")
+                        #     mask_padding = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding")
                         with gr.Row():
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
                             ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet scale")
@@ -410,7 +435,7 @@ def launch():
                           mo1_ch, mo1_scale,
                           mo2_ch, mo2_scale,
                           ip_ch, ip_image, ip_scale, ip_type,
-                          mask_ch, mask_padding,
+                          mask_ch1, mask_type1, mask_padding1,
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           delete_if_exists, test_run, refine],
