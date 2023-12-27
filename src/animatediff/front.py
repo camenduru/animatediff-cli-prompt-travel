@@ -27,7 +27,7 @@ def execute_wrapper(
       inp_model: str, inp_vae: str, 
       inp_mm: str, inp_context: str, inp_sche: str, 
       inp_lcm: bool, inp_hires: bool,
-      inp_step: int, inp_cfg: float,  
+      inp_step: int, inp_cfg: float, seed:int,
       inp_posi: str, inp_neg: str, 
       inp_lora1: str, inp_lora1_step: float,
       inp_lora2: str, inp_lora2_step: float,
@@ -36,7 +36,7 @@ def execute_wrapper(
       mo1_ch: str, mo1_scale: float,
       mo2_ch: str, mo2_scale: float,
       ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str,
-      mask_ch1: bool, mask_type1: str, mask_padding1:int,
+      mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       delete_if_exists: bool, is_test: bool, is_refine: bool,
@@ -70,7 +70,7 @@ def execute_wrapper(
             model=inp_model, vae=inp_vae, 
             motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
             is_lcm=inp_lcm, is_hires=inp_hires,
-            step=inp_step, cfg=inp_cfg, 
+            step=inp_step, cfg=inp_cfg, seed=seed,
             head_prompt=inp_posi, neg_prompt=inp_neg,
             inp_lora1=inp_lora1, inp_lora1_step=inp_lora1_step,
             inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
@@ -78,6 +78,7 @@ def execute_wrapper(
             inp_lora4=inp_lora4, inp_lora4_step=inp_lora4_step,
             mo1_ch=mo1_ch, mo1_scale=mo1_scale,
             mo2_ch=mo2_ch, mo2_scale=mo2_scale,
+            mask_target=mask_target,
             ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,
             ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
             dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
@@ -145,7 +146,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
     if not stylize_fg_dir.exists() and mask_ch1:
         create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
         # !animatediff stylize create-mask {stylize_dir} -mp {mask_padding} -nc　
-        if mask_ch:
+        if mask_ch1:
             mask_video = mask_dir/'mask.mp4'
             save_output(
                 None,
@@ -290,7 +291,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
     
 #    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
     try:
-        create_video(video, semi_final_video, final_video)
+        create_video(video.as_posix(), semi_final_video.as_posix(), final_video.as_posix())
         print(f"new_file_path: {final_video}")
         
         yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
@@ -337,16 +338,16 @@ def launch():
                     with gr.Group():
                         with gr.Row():
                             inp_mm = gr.Dropdown(choices=mm_files, label="Motion Module")
-                            inp_sche = gr.Dropdown(choices=schedulers, label="Sampling Method")
+                            inp_sche = gr.Dropdown(choices=schedulers, label="Sampling Method", value=("DPM++ SDE Karras", "k_dpmpp_sde"))
                             inp_context = gr.Dropdown(choices=context_choice, label="Context", value="uniform")
                     with gr.Group():
                         with gr.Row():
                             inp_lcm = gr.Checkbox(label="LCM", value=True)
                             inp_hires = gr.Checkbox(label="gradual latent hires fix", value=True)
                     with gr.Group():
-                        
                         with gr.Row():
-                            inp_step = gr.Slider(minimum=1, maximum=30, step=1, value=10, label="Sampling Steps")
+                            seed = gr.Number(value=-1, label="Seed")
+                            inp_step = gr.Slider(minimum=1, maximum=50, step=1, value=10, label="Sampling Steps")
                             inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=2.4, label="CFG Scale")
                     inp_posi = gr.Textbox(lines=2, value="1girl, beautiful", placeholder="1girl, beautiful", label="Positive Prompt")
                     inp_neg = gr.Textbox(lines=2, value="low quality, low res,", placeholder="low quality, low res,", label="Negative Prompt")
@@ -384,12 +385,12 @@ def launch():
                                 ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="scale", interactive=False)
                                 ip_type = gr.Radio(choices=ip_choice, label="Type", value="plus_face", interactive=False)
                         with gr.Row():
-                            mask_ch1 = gr.Checkbox(label="Mask(Inpaint)", value=False)
+                            with gr.Column():
+                                with gr.Group():
+                                    mask_ch1 = gr.Checkbox(label="Mask(Inpaint)", value=False)
+                                    mask_target = gr.Textbox(lines=1, value="person", show_label=False)
                             mask_type1 = gr.Dropdown(choices=mask_type_choice, label="Type", value="Original" )
                             mask_padding1 = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding")
-                        # with gr.Row():
-                        #     mask_ch = gr.Radio(choices=bg_choice, label="Background Type", value="Original")
-                        #     mask_padding = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding")
                         with gr.Row():
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
                             ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet scale")
@@ -430,7 +431,7 @@ def launch():
                           inp_model, inp_vae, 
                           inp_mm, inp_context, inp_sche, 
                           inp_lcm, inp_hires,
-                          inp_step, inp_cfg, 
+                          inp_step, inp_cfg, seed,
                           inp_posi, inp_neg, 
                           inp_lora1, inp_lora1_step,
                           inp_lora2, inp_lora2_step,
@@ -439,7 +440,7 @@ def launch():
                           mo1_ch, mo1_scale,
                           mo2_ch, mo2_scale,
                           ip_ch, ip_image, ip_scale, ip_type,
-                          mask_ch1, mask_type1, mask_padding1,
+                          mask_ch1, mask_target, mask_type1, mask_padding1,
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           delete_if_exists, test_run, refine],
@@ -451,7 +452,6 @@ def launch():
         dp_ch.change(fn=change_dp, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
         la_ch.change(fn=change_la, inputs=[la_ch], outputs=[la_ch, la_scale])
 
-        
     iface.queue()
     iface.launch(share=True)
 

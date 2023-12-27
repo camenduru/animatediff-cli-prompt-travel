@@ -244,7 +244,7 @@ def create_config_by_gui(
     model: str, vae: str,
     motion_module: str, context:str, scheduler: str, 
     is_lcm: bool, is_hires: bool,
-    step: int, cfg: float, 
+    step: int, cfg: float, seed:int, 
     head_prompt:str,
     neg_prompt:str,
     inp_lora1: str, inp_lora1_step: float,
@@ -253,28 +253,68 @@ def create_config_by_gui(
     inp_lora4: str, inp_lora4_step: float,
     mo1_ch: str, mo1_scale: float,
     mo2_ch: str, mo2_scale: float,
+    mask_target:str,
     ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
 ) -> Path:
     org_config='config/fix/real_base2.json'
     model_config: ModelConfig = get_model_config(org_config)
-    print(f"inp_posi{head_prompt}")
-    print(f"inp_lora1{inp_lora1}")
-    print(f"inp_lora1_step{inp_lora1_step}")
-    print(f"neg_prompt{neg_prompt}")
+    # 引数とその値を表示
+    print(f"now_str: {now_str}")
+    print(f"video: {video}")
+    print(f"stylize_dir: {stylize_dir}")
+    print(f"model: {model}")
+    print(f"vae: {vae}")
+    print(f"motion_module: {motion_module}")
+    print(f"context: {context}")
+    print(f"scheduler: {scheduler}")
+    print(f"is_lcm: {is_lcm}")
+    print(f"is_hires: {is_hires}")
+    print(f"step: {step}")
+    print(f"cfg: {cfg}")
+    print(f"Seed: {seed}")
+    print(f"head_prompt: {head_prompt}")
+    print(f"neg_prompt: {neg_prompt}")
+    print(f"inp_lora1: {inp_lora1}")
+    print(f"inp_lora1_step: {inp_lora1_step}")
+    print(f"inp_lora2: {inp_lora2}")
+    print(f"inp_lora2_step: {inp_lora2_step}")
+    print(f"inp_lora3: {inp_lora3}")
+    print(f"inp_lora3_step: {inp_lora3_step}")
+    print(f"inp_lora4: {inp_lora4}")
+    print(f"inp_lora4_step: {inp_lora4_step}")
+    print(f"mo1_ch: {mo1_ch}")
+    print(f"mo1_scale: {mo1_scale}")
+    print(f"mo2_ch: {mo2_ch}")
+    print(f"mo2_scale: {mo2_scale}")
+    print(f"ip_ch: {ip_ch}")
+    print(f"ip_image: {ip_image}")
+    print(f"ip_scale: {ip_scale}")
+    print(f"ip_type: {ip_type}")
+    print(f"ad_ch: {ad_ch}")
+    print(f"ad_scale: {ad_scale}")
+    print(f"op_ch: {op_ch}")
+    print(f"op_scale: {op_scale}")
+    print(f"dp_ch: {dp_ch}")
+    print(f"dp_scale: {dp_scale}")
+    print(f"la_ch: {la_ch}")
+    print(f"la_scale: {la_scale}")
+
     print(ip_image)
     
     model_config.name = now_str
     model_config.path = Path(model)
     model_config.motion_module = Path(motion_module)
-    model_config.vae_path = vae
+    model_config.vae_path = vae if vae is not None else ""
     model_config.context_schedule = context
     model_config.steps = step
     model_config.guidance_scale = cfg
     model_config.scheduler = scheduler
     model_config.head_prompt = head_prompt
-    model_config.n_prompt = [neg.strip() for neg in neg_prompt.split(',') if neg]
+    model_config.n_prompt = [neg_prompt]
+    model_config.seed = [seed]
+    # model_config.n_prompt = [neg.strip() for neg in neg_prompt.split(',') if neg]
     model_config.lcm_map = {
         "enable": is_lcm,
         "start_scale": 0.15,
@@ -298,7 +338,7 @@ def create_config_by_gui(
                 "offset": 0
             },
             "create_mask": [
-                "person"
+                mask_target
             ],
             "composite": {
                 "fg_list": [
@@ -357,14 +397,13 @@ def create_config_by_gui(
     model_config.controlnet_map["save_detectmap"] = True
     
     model_config.img2img_map["save_init_image"] = False
-    
     model_config.ip_adapter_map["enable"] = ip_ch
     model_config.ip_adapter_map["input_image_dir"] = stylize_dir/'00_ipadapter'
     model_config.ip_adapter_map["scale"] = ip_scale
-    model_config.ip_adapter_map["is_full_face"] = True if ip_type == "is_full_face" else False
-    model_config.ip_adapter_map["is_plus_face"] = True if ip_type == "is_plus_face" else False
-    model_config.ip_adapter_map["is_plus"] = True if ip_type == "is_plus" else False
-    model_config.ip_adapter_map["is_light"] = True if ip_type == "is_light" else False
+    model_config.ip_adapter_map["is_full_face"] = True if ip_type == "full_face" else False
+    model_config.ip_adapter_map["is_plus_face"] = True if ip_type == "plus_face" else False
+    model_config.ip_adapter_map["is_plus"] = True if ip_type == "plus" else False
+    model_config.ip_adapter_map["is_light"] = True if ip_type == "light" else False
     model_config.ip_adapter_map["save_input_image"] = False
     save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
     
