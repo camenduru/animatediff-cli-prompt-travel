@@ -397,8 +397,8 @@ def create_config_by_gui(
     # model_config.controlnet_map["input_image_dir"] = os.path.relpath((stylize_dir/'00_controlnet_image').absolute(), data_dir)
     # model_config.img2img_map["init_img_dir"] = os.path.relpath((stylize_dir/'00_img2img').absolute(), data_dir)
 
-    model_config.controlnet_map["input_image_dir"] = Path("../..") / stylize_dir/'00_controlnet_image'
-    model_config.img2img_map["init_img_dir"] = Path("../..") / stylize_dir /'00_img2img'
+    model_config.controlnet_map["input_image_dir"] = Path("..") / stylize_dir/'00_controlnet_image'
+    model_config.img2img_map["init_img_dir"] = Path("..") / stylize_dir /'00_img2img'
 
     
     model_config.controlnet_map["max_samples_on_vram"] = 0

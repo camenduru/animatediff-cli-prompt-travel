@@ -59,9 +59,13 @@ def execute_wrapper(
             return
 
         bg_config = None
-        save_folder = 'data/video'
+        save_folder = Path('data/video')
         saved_file = download_video(url, save_folder)
-        video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
+        
+        separator = os.path.sep
+        video_name = os.path.splitext(os.path.normpath(saved_file.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
+        
+        # video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
         stylize_dir= get_stylize_dir(video_name)
         create_config_by_gui(
             now_str=time_str,
