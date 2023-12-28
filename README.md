@@ -54,6 +54,7 @@ You need to prepare Model, Motion Module, Lora and place them below
 model : /animatediff-cli-prompt-travel/data/sd_models  
 LoRA : /animatediff-cli-prompt-travel/data/lora  
 model : /animatediff-cli-prompt-travel/data/motion_modules  
+VAE : /animatediff-cli-prompt-travel/data/vae  
 
 when you start, you can see the URL in console.  
 Click and enjoy making video!  
