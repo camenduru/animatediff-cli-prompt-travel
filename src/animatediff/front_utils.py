@@ -219,26 +219,32 @@ def change_ip(enable):
     ip_type = gr.Radio(interactive=enable)
     return ip_ch, ip_image, ip_scale, ip_type
     
-def change_ad(enable):
-    ad_ch = gr.Checkbox(value=enable)
-    ad_scale = gr.Slider(interactive=enable)
-    return ad_ch, ad_scale
+# def change_ad(enable):
+#     ad_ch = gr.Checkbox(value=enable)
+#     ad_scale = gr.Slider(interactive=enable)
+#     return ad_ch, ad_scale
 
-def change_op(enable):
-    op_ch = gr.Checkbox(value=enable)
-    op_scale = gr.Slider(interactive=enable)
-    return op_ch, op_scale
+# def change_op(enable):
+#     op_ch = gr.Checkbox(value=enable)
+#     op_scale = gr.Slider(interactive=enable)
+#     return op_ch, op_scale
 
-def change_dp(enable):
-    dp_ch = gr.Checkbox(value=enable)
-    dp_scale = gr.Slider(interactive=enable)
-    return dp_ch, dp_scale
+# def change_dp(enable):
+#     dp_ch = gr.Checkbox(value=enable)
+#     dp_scale = gr.Slider(interactive=enable)
+#     return dp_ch, dp_scale
 
-def change_la(enable):
-    la_ch = gr.Checkbox(value=enable)
-    la_scale = gr.Slider(interactive=enable)
-    return la_ch, la_scale
-    
+# def change_la(enable):
+#     la_ch = gr.Checkbox(value=enable)
+#     la_scale = gr.Slider(interactive=enable)
+#     return la_ch, la_scale
+
+def change_cn(enable):
+    ch = gr.Checkbox(value=enable)
+    scale = gr.Slider(interactive=enable)
+    return ch, scale
+
+
 def create_config_by_gui(
     now_str:str,
     video:str,
@@ -259,6 +265,7 @@ def create_config_by_gui(
     ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
+    me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float
 ) -> Path:
     data_dir = get_dir("data")
     org_config='config/fix/real_base2.json'
@@ -304,6 +311,10 @@ def create_config_by_gui(
     print(f"dp_scale: {dp_scale}")
     print(f"la_ch: {la_ch}")
     print(f"la_scale: {la_scale}")
+    print(f"me_ch: {me_ch}")
+    print(f"me_scale: {me_scale}")
+    print(f"i2i_ch: {i2i_ch}")
+    print(f"i2i_scale: {i2i_scale}")
 
     print(ip_image)
     
@@ -399,15 +410,16 @@ def create_config_by_gui(
 
     model_config.controlnet_map["input_image_dir"] = Path("..") / stylize_dir/'00_controlnet_image'
     model_config.img2img_map["init_img_dir"] = Path("..") / stylize_dir /'00_img2img'
-
+    model_config.img2img_map["enable"] = i2i_ch
+    model_config.img2img_map["save_init_image"] = False
+    model_config.img2img_map["denoising_strength"] = i2i_scale
     
     model_config.controlnet_map["max_samples_on_vram"] = 0
     model_config.controlnet_map["max_models_on_vram"] = 0
     model_config.controlnet_map["save_detectmap"] = True
     
-    model_config.img2img_map["save_init_image"] = False
     model_config.ip_adapter_map["enable"] = ip_ch
-    model_config.ip_adapter_map["input_image_dir"] = stylize_dir/'00_ipadapter'
+    model_config.ip_adapter_map["input_image_dir"] = Path("..") / stylize_dir / '00_ipadapter'
     model_config.ip_adapter_map["scale"] = ip_scale
     model_config.ip_adapter_map["is_full_face"] = True if ip_type == "full_face" else False
     model_config.ip_adapter_map["is_plus_face"] = True if ip_type == "plus_face" else False
@@ -424,6 +436,8 @@ def create_config_by_gui(
     model_config.controlnet_map["controlnet_depth"]["controlnet_conditioning_scale"] = dp_scale
     model_config.controlnet_map["controlnet_lineart"]["enable"] = la_ch
     model_config.controlnet_map["controlnet_lineart"]["controlnet_conditioning_scale"] = la_scale
+    model_config.controlnet_map["controlnet_mediapipe_face"]["enable"] = me_ch
+    model_config.controlnet_map["controlnet_mediapipe_face"]["controlnet_conditioning_scale"] = me_scale
     
     save_config_path = get_config_path(now_str)
     save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")

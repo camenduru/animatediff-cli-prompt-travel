@@ -3,8 +3,7 @@ from animatediff.execute import execute
 from animatediff.front_utils import (get_schedulers, getNow, download_video, create_file_list,
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
-                                    create_config_by_gui, get_config_path, update_config, change_ip, change_ad, change_op,
-                                    change_dp, change_la, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
+                                    create_config_by_gui, get_config_path, update_config, change_ip, change_cn, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
                                     get_mask_dir, get_bg_dir)
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
@@ -39,6 +38,7 @@ def execute_wrapper(
       mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
+      me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
       delete_if_exists: bool, is_test: bool, is_refine: bool,
       progress=gr.Progress(track_tqdm=True)):
     yield 'generation Initiated...', None, None, None, None, None, None, None,None, None, gr.Button("Generating...", scale=1, interactive=False)
@@ -86,6 +86,7 @@ def execute_wrapper(
             ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,
             ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
             dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
+            me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale
         )
 
         yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
@@ -117,10 +118,10 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         openpose_video = None
         front_video = None
         front_refine = None
-        composite = None
+        composite_video = None
         final_video = None
 
-        yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+        yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
         separator = os.path.sep
         video_name = os.path.splitext(os.path.normpath(video.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
 
@@ -169,7 +170,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         config = get_config_path(now_str)
         model_config: ModelConfig = get_model_config(config)       
 
-        yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+        yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
 
         print(f"Start: stylize generate {stylize_fg_dir}")
         if is_test:
@@ -236,7 +237,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             print(f"cur_width {cur_width}")
             new_width = int(float(cur_width) * float(1.5))
             print(f"refine width {new_width}")
-            yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+            yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
             # if mask_ch != "As is Base":
             if mask_ch1:
                 result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
@@ -245,9 +246,9 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
                 # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W {new_width}
                 # front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
                 front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
-                print(f"video3: {front_video}")
+                print(f"front_video: {front_video}")
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
-                print(f"aaaaaaaa{fg_result}")
+                print(f"fg_result1{fg_result}")
                 if mask_type == 'No Background': 
                 # if mask_ch == 'Nothing Base':
                     semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
@@ -258,7 +259,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
                 print(f"Start: Refine {result_dir} -width {new_width}")
                 refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
                 # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W {new_width}
-                print(f"video3: {front_video}")
+                print(f"front_video: {front_video}")
                 fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
                 # front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
                 semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
@@ -276,7 +277,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
 
         # if mask_ch == "Original":
         if mask_ch1 and mask_type == 'Original': 
-            yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+            yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
             bg_result = get_last_sorted_subfolder(stylize_bg_dir)
 
             print(f"fg_result:{fg_result}")
@@ -290,11 +291,15 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
                 # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}  
             else:
                 bg_result = stylize_bg_dir/'00_img2img'
-                composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
+                print(f"stylize_dir: {stylize_dir}")
+                print(f"bg_result: {bg_result}")
+                print(f"fg_result: {fg_result}")
+                composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
                 # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}
 
             semi_final_video = find_and_get_composite_video(stylize_dir)
-            composite = find_and_get_composite_video(stylize_dir)
+            composite_video = find_and_get_composite_video(stylize_dir)
+            
         print(f"final_video_dir: {semi_final_video}")
 
         final_dir = os.path.dirname(semi_final_video)
@@ -308,7 +313,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             create_video(video, semi_final_video, final_video)
             print(f"new_file_path: {final_video}")
 
-            yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
         except Exception as e:
             # print(f"error:{e}")
             traceback.print_exc()
@@ -316,10 +321,10 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             # print(e.args)     # arguments stored in .args
             # print(e)          # __str__ allows args to be printed directly,
             final_video = semi_final_video
-            yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
 
     except Exception as inst:
-        yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+        yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
         # print(type(inst))    # the exception type
         # print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly,
@@ -400,6 +405,7 @@ def launch():
                             mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale")
                         
                     with gr.Accordion("Special Effects", open=True):
+                        
                         ip_ch = gr.Checkbox(label="IPAdapter", value=False)
                         with gr.Row():
                             ip_image = gr.Image(height=256, type="pil", interactive=False)
@@ -414,17 +420,23 @@ def launch():
                             mask_type1 = gr.Dropdown(choices=mask_type_choice, label="Type", value="Original" )
                             mask_padding1 = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding")
                         with gr.Row():
+                            i2i_ch = gr.Checkbox(label="Image2Image", value=False)
+                            i2i_scale = gr.Slider(minimum=0.05, maximum=5,  step=0.05, value=0.7, label="Denoising Strength")
+                        with gr.Row():
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
-                            ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet scale")
+                            ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet Weight")
                         with gr.Row():
                             op_ch = gr.Checkbox(label="Open Pose", value=True)
-                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Open Pose scale")
+                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Open Pose Weight")
                         with gr.Row():
                             dp_ch = gr.Checkbox(label="Depth", value=False)
-                            dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Depth scale", interactive=False)
+                            dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Depth Weight", interactive=False)
                         with gr.Row():
                             la_ch = gr.Checkbox(label="Lineart", value=False)
-                            la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Lineart scale", interactive=False)
+                            la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Lineart Weight", interactive=False)
+                        with gr.Row():
+                            me_ch = gr.Checkbox(label="Mediapipe_face", value=False)
+                            me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Mediapipe Weight ", interactive=False)
                                 
                  #   inp2 = gr.Dropdown(choices=result_list, info="please select", label="Config")
                     with gr.Row():
@@ -464,14 +476,17 @@ def launch():
                           mask_ch1, mask_target, mask_type1, mask_padding1,
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
+                          me_ch, me_scale, i2i_ch, i2i_scale,
                           delete_if_exists, test_run, refine],
                   outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_front, o_front_refine, o_composite, o_final, btn])
 
         ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type])        
-        ad_ch.change(fn=change_ad, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
-        op_ch.change(fn=change_op, inputs=[op_ch], outputs=[op_ch, op_scale])
-        dp_ch.change(fn=change_dp, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
-        la_ch.change(fn=change_la, inputs=[la_ch], outputs=[la_ch, la_scale])
+        ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
+        op_ch.change(fn=change_cn, inputs=[op_ch], outputs=[op_ch, op_scale])
+        dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
+        la_ch.change(fn=change_cn, inputs=[la_ch], outputs=[la_ch, la_scale])
+        me_ch.change(fn=change_cn, inputs=[me_ch], outputs=[me_ch, me_scale])
+        i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
 
     iface.queue()
     iface.launch(share=True)

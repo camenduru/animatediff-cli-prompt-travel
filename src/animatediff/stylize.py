@@ -279,7 +279,8 @@ def create_config(
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_scribble"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_normalbae"), dirs_exist_ok=True)
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("animatediff_controlnet"), dirs_exist_ok=True)
-
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_mediapipe_face"), dirs_exist_ok=True)
+    
 #    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
 
     black_list = []
@@ -1378,7 +1379,7 @@ def composite(
     ] = None,
 ) -> str:
     """composite FG and BG"""
-
+    print("composite starts")
     from animatediff.utils.composite import composite, simple_composite
     from animatediff.utils.mask import (create_fg, load_frame_list,
                                         load_mask_list, restore_position)
