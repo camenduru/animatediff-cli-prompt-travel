@@ -26,7 +26,7 @@ def execute_wrapper(
       url: str, fps: int,
       inp_model: str, inp_vae: str, 
       inp_mm: str, inp_context: str, inp_sche: str, 
-      inp_lcm: bool, inp_hires: bool,
+      inp_lcm: bool, inp_hires: bool, low_vr:bool,
       inp_step: int, inp_cfg: float, seed:int,
       inp_posi: str, inp_neg: str, 
       inp_lora1: str, inp_lora1_step: float,
@@ -89,7 +89,7 @@ def execute_wrapper(
         )
 
         yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
-                                is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1)
+                                is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1,is_low=low_vr )
     except Exception as inst:
         yield 'Runtime Error', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
         # print(type(inst))    # the exception type
@@ -101,7 +101,7 @@ def execute_wrapper(
     print(f"実行時間: {execution_time}秒")
 
 def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, 
-                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int):
+                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool):
     
     if video.startswith("/notebooks"):
         video = video[len("/notebooks"):]
@@ -144,11 +144,11 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         if stylize_dir.exists():
             print(f"Delete folder and create again")
             shutil.rmtree(stylize_dir)
-        create_config(org_movie=video, fps=fps)
+        create_config(org_movie=video, fps=fps, low_vram=is_low)
         # !animatediff stylize create-config {video} -f {fps}
     
     if not stylize_fg_dir.exists() and mask_ch1:
-        create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True)
+        create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True, low_vram=is_low)
         # !animatediff stylize create-mask {stylize_dir} -mp {mask_padding} -nc　
         if mask_ch1:
             mask_video = mask_dir/'mask.mp4'
@@ -342,12 +342,13 @@ def launch():
                     with gr.Group():
                         with gr.Row():
                             inp_mm = gr.Dropdown(choices=mm_files, label="Motion Module")
-                            inp_sche = gr.Dropdown(choices=schedulers, label="Sampling Method", value=("DPM++ SDE Karras", "k_dpmpp_sde"))
+                            inp_sche = gr.Dropdown(choices=schedulers, label="Sampling Method", value="k_dpmpp_sde")
                             inp_context = gr.Dropdown(choices=context_choice, label="Context", value="uniform")
                     with gr.Group():
                         with gr.Row():
                             inp_lcm = gr.Checkbox(label="LCM", value=True)
                             inp_hires = gr.Checkbox(label="gradual latent hires fix", value=False)
+                            low_vr = gr.Checkbox(label="Low VRAM", value=False)
                     with gr.Group():
                         with gr.Row():
                             seed = gr.Number(value=-1, label="Seed")
@@ -434,7 +435,7 @@ def launch():
                   inputs=[url, fps,
                           inp_model, inp_vae, 
                           inp_mm, inp_context, inp_sche, 
-                          inp_lcm, inp_hires,
+                          inp_lcm, inp_hires, low_vr,
                           inp_step, inp_cfg, seed,
                           inp_posi, inp_neg, 
                           inp_lora1, inp_lora1_step,
