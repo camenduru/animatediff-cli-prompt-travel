@@ -41,21 +41,21 @@ def execute_wrapper(
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       delete_if_exists: bool, is_test: bool, is_refine: bool,
       progress=gr.Progress(track_tqdm=True)):
-    yield 'generation Initiated...', None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
+    yield 'generation Initiated...', None, None, None, None, None, None, None,None, None, gr.Button("Generating...", scale=1, interactive=False)
     start_time = time.time()
     time_str = getNow()
     try:
         if url is None:
-            yield 'Error: URL input is required.', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: URL input is required.', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_model == []:
-            yield 'Error: Select Model', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: Select Model', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_mm == []:
-            yield 'Error: Select Motion Module', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: Select Motion Module', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_sche == []:
-            yield 'Error: Select Sampling Method', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: Select Sampling Method', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
 
         bg_config = None
@@ -91,7 +91,7 @@ def execute_wrapper(
         yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
                                 is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1,is_low=low_vr )
     except Exception as inst:
-        yield 'Runtime Error', None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+        yield 'Runtime Error', None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
         # print(type(inst))    # the exception type
         # print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly,
@@ -109,208 +109,222 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         if bg_config.startswith("/notebooks"):
             bg_config = bg_config[len("/notebooks"):]
     print(f"video1: {video}")
-
-    mask_video = None
-    depth_video = None
-    lineart_video = None
-    openpose_video = None
-    front_video = None
-    final_video = None
-    
-    yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-    separator = os.path.sep
-    video_name = os.path.splitext(os.path.normpath(video.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
-
-    # video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-    video = Path(video).resolve()
-    stylize_dir = get_stylize_dir(video_name)
-    stylize_fg_dir = get_fg_dir(video_name)
-    mask_dir = get_mask_dir(video_name)
-    stylize_bg_dir = get_bg_dir(video_name)
-
-    print(f"stylize_dir:{stylize_dir}")
-    print(f"stylize_fg_dir:{stylize_fg_dir}")
-
-    if bg_config is not None:
-        bg_config = Path(bg_config)
-        bg_model_config: ModelConfig = get_model_config(bg_config)
-
-    if stylize_dir.exists() and not delete_if_exists:
-        print(f"config already exists. skip create-config")
-        # if mask_ch != "As is Base":
-        if mask_ch1:
-            mask_video = mask_dir/'mask.mp4'
-    else:
-        if stylize_dir.exists():
-            print(f"Delete folder and create again")
-            shutil.rmtree(stylize_dir)
-        create_config(org_movie=video, fps=fps, low_vram=is_low)
-        # !animatediff stylize create-config {video} -f {fps}
-    
-    if not stylize_fg_dir.exists() and mask_ch1:
-        create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True, low_vram=is_low)
-        # !animatediff stylize create-mask {stylize_dir} -mp {mask_padding} -nc　
-        if mask_ch1:
-            mask_video = mask_dir/'mask.mp4'
-            save_output(
-                None,
-                mask_dir,
-                mask_video,
-                {"format":"mp4", "fps":fps},
-                False,
-                False,
-                None,
-            )
-        
-    update_config(now_str, video_name,mask_ch1)
-    config = get_config_path(now_str)
-    model_config: ModelConfig = get_model_config(config)       
-    
-    yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-
-    print(f"Start: stylize generate {stylize_fg_dir}")
-    if is_test:
-        # if mask_ch != "As is Base":
-        if mask_ch1:
-            generate(stylize_dir=stylize_fg_dir, length=16)
-            # !animatediff stylize generate {stylize_fg_dir} -L 16
-            if bg_config is not None:
-                generate(stylize_dir=stylize_bg_dir, length=16)
-                # !animatediff stylize generate {stylize_bg_dir} -L 16
-            front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
-            detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-        else:
-            generate(stylize_dir=stylize_dir, length=16)
-            # !animatediff stylize generate {stylize_dir} -L 16
-            front_video = find_last_folder_and_mp4_file(stylize_dir)
-            detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-    else:
-        # if mask_ch != "As is Base":
-        if mask_ch1:
-            generate(stylize_dir=stylize_fg_dir)
-            # !animatediff stylize generate {stylize_fg_dir}
-            if bg_config is not None:
-                generate(stylize_dir=stylize_bg_dir)
-                # !animatediff stylize generate {stylize_bg_dir}
-            front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
-            detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-        else:
-            print(f"generate {stylize_dir} start")
-            generate(stylize_dir=stylize_dir)
-            # !animatediff stylize generate {stylize_dir}
-            front_video = find_last_folder_and_mp4_file(stylize_dir)
-            detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-    print("###########################################################################################")
-           
-    print(f"video2: {front_video}")
-    print(f"detect_map:{detect_map}")
-    subfolders = [f.path for f in os.scandir(Path(detect_map)) if f.is_dir()]
-    print(f"cn_folders: {subfolders}")
-    for cn_folder in subfolders:
-        # フォルダ名が "animate_diff" でない場合の処理
-        print(f"cn_folder: {cn_folder}")
-        if os.path.basename(cn_folder) != "animatediff_controlnet":
-            filename = Path(cn_folder + '/' + os.path.basename(cn_folder)+'.mp4')
-            save_output(
-                None,
-                Path(cn_folder),
-                filename,
-                {"format":"mp4","fps":fps},
-                False,
-                False,
-                None,
-            )
-
-            if os.path.basename(cn_folder) == "controlnet_depth":
-                depth_video = filename
-            if os.path.basename(cn_folder) == "controlnet_lineart":
-                lineart_video = filename
-            if os.path.basename(cn_folder) == "controlnet_openpose":
-                openpose_video = filename
-    
-    if is_refine:
-        cur_width = model_config.stylize_config["0"]["width"]
-        print(f"cur_width {cur_width}")
-        new_width = int(float(cur_width) * float(1.5))
-        print(f"refine width {new_width}")
-        yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-        # if mask_ch != "As is Base":
-        if mask_ch1:
-            result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-            print(f"Start: Refine {result_dir} -width {new_width}")
-            refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
-            # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W {new_width}
-            front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
-            print(f"video3: {front_video}")
-            fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
-            print(f"aaaaaaaa{fg_result}")
-            if mask_type == 'No Background': 
-            # if mask_ch == 'Nothing Base':
-                semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
-        else:
-            result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-            print(f"Start: Refine {result_dir} -width {new_width}")
-            refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
-            # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W {new_width}
-            front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
-            print(f"video3: {front_video}")
-            fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
-            semi_final_video = front_video
-    else:
-        if mask_ch1:
-        # if mask_ch != "As is Base":
-            fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-            # if mask_ch == 'Nothing Base':
-            if mask_type == 'Nothing Base': 
-                semi_final_video = find_last_folder_and_mp4_file(stylize_fg_dir)
-        else:
-            fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-            semi_final_video = find_last_folder_and_mp4_file(stylize_dir)
-
-    # if mask_ch == "Original":
-    if mask_ch1 and mask_type == 'Original': 
-        yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-        bg_result = get_last_sorted_subfolder(stylize_bg_dir)
-
-        print(f"fg_result:{fg_result}")
-        if bg_config is not None:
-            print(f"bg_dir: {bg_result}")
-        else:
-            print(f"bg_dir: {stylize_bg_dir/'00_img2img'}")
-
-        if bg_config is not None:
-            final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
-            # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}  
-        else:
-            bg_result = stylize_bg_dir/'00_img2img'
-            composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
-            # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}
-
-        semi_final_video = find_and_get_composite_video(stylize_dir)
-
-    print(f"final_video_dir: {semi_final_video}")
-
-    final_dir = os.path.dirname(semi_final_video)
-    final_video = os.path.join(final_dir,  video_name + ".mp4")
-    
-#    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
     try:
-        video = Path(video).as_posix()
-        semi_final_video = Path(semi_final_video).as_posix()
-        final_video = Path(final_video).as_posix()
-        create_video(video, semi_final_video, final_video)
-        print(f"new_file_path: {final_video}")
-        
-        yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
-    except Exception as e:
-        # print(f"error:{e}")
+        original = video
+        mask_video = None
+        depth_video = None
+        lineart_video = None
+        openpose_video = None
+        front_video = None
+        front_refine = None
+        composite = None
+        final_video = None
+
+        yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+        separator = os.path.sep
+        video_name = os.path.splitext(os.path.normpath(video.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
+
+        # video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
+        video = Path(video).resolve()
+        stylize_dir = get_stylize_dir(video_name)
+        stylize_fg_dir = get_fg_dir(video_name)
+        mask_dir = get_mask_dir(video_name)
+        stylize_bg_dir = get_bg_dir(video_name)
+
+        print(f"stylize_dir:{stylize_dir}")
+        print(f"stylize_fg_dir:{stylize_fg_dir}")
+
+        if bg_config is not None:
+            bg_config = Path(bg_config)
+            bg_model_config: ModelConfig = get_model_config(bg_config)
+
+        if stylize_dir.exists() and not delete_if_exists:
+            print(f"config already exists. skip create-config")
+            # if mask_ch != "As is Base":
+            if mask_ch1:
+                mask_video = mask_dir/'mask.mp4'
+        else:
+            if stylize_dir.exists():
+                print(f"Delete folder and create again")
+                shutil.rmtree(stylize_dir)
+            create_config(org_movie=video, fps=fps, low_vram=is_low)
+            # !animatediff stylize create-config {video} -f {fps}
+
+        if not stylize_fg_dir.exists() and mask_ch1:
+            create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True, low_vram=is_low)
+            # !animatediff stylize create-mask {stylize_dir} -mp {mask_padding} -nc　
+            if mask_ch1:
+                mask_video = mask_dir/'mask.mp4'
+                save_output(
+                    None,
+                    mask_dir,
+                    mask_video,
+                    {"format":"mp4", "fps":fps},
+                    False,
+                    False,
+                    None,
+                )
+
+        update_config(now_str, video_name,mask_ch1)
+        config = get_config_path(now_str)
+        model_config: ModelConfig = get_model_config(config)       
+
+        yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+
+        print(f"Start: stylize generate {stylize_fg_dir}")
+        if is_test:
+            # if mask_ch != "As is Base":
+            if mask_ch1:
+                generate(stylize_dir=stylize_fg_dir, length=16)
+                # !animatediff stylize generate {stylize_fg_dir} -L 16
+                if bg_config is not None:
+                    generate(stylize_dir=stylize_bg_dir, length=16)
+                    # !animatediff stylize generate {stylize_bg_dir} -L 16
+                front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
+                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
+            else:
+                generate(stylize_dir=stylize_dir, length=16)
+                # !animatediff stylize generate {stylize_dir} -L 16
+                front_video = find_last_folder_and_mp4_file(stylize_dir)
+                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+        else:
+            # if mask_ch != "As is Base":
+            if mask_ch1:
+                generate(stylize_dir=stylize_fg_dir)
+                # !animatediff stylize generate {stylize_fg_dir}
+                if bg_config is not None:
+                    generate(stylize_dir=stylize_bg_dir)
+                    # !animatediff stylize generate {stylize_bg_dir}
+                front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
+                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
+            else:
+                print(f"generate {stylize_dir} start")
+                generate(stylize_dir=stylize_dir)
+                # !animatediff stylize generate {stylize_dir}
+                front_video = find_last_folder_and_mp4_file(stylize_dir)
+                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+        print("###########################################################################################")
+
+        print(f"video2: {front_video}")
+        print(f"detect_map:{detect_map}")
+        subfolders = [f.path for f in os.scandir(Path(detect_map)) if f.is_dir()]
+        print(f"cn_folders: {subfolders}")
+        for cn_folder in subfolders:
+            # フォルダ名が "animate_diff" でない場合の処理
+            print(f"cn_folder: {cn_folder}")
+            if os.path.basename(cn_folder) != "animatediff_controlnet":
+                filename = Path(cn_folder + '/' + os.path.basename(cn_folder)+'.mp4')
+                save_output(
+                    None,
+                    Path(cn_folder),
+                    filename,
+                    {"format":"mp4","fps":fps},
+                    False,
+                    False,
+                    None,
+                )
+
+                if os.path.basename(cn_folder) == "controlnet_depth":
+                    depth_video = filename
+                if os.path.basename(cn_folder) == "controlnet_lineart":
+                    lineart_video = filename
+                if os.path.basename(cn_folder) == "controlnet_openpose":
+                    openpose_video = filename
+
+        if is_refine:
+            cur_width = model_config.stylize_config["0"]["width"]
+            print(f"cur_width {cur_width}")
+            new_width = int(float(cur_width) * float(1.5))
+            print(f"refine width {new_width}")
+            yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+            # if mask_ch != "As is Base":
+            if mask_ch1:
+                result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
+                print(f"Start: Refine {result_dir} -width {new_width}")
+                refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
+                # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W {new_width}
+                # front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+                front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+                print(f"video3: {front_video}")
+                fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
+                print(f"aaaaaaaa{fg_result}")
+                if mask_type == 'No Background': 
+                # if mask_ch == 'Nothing Base':
+                    semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+                    front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+
+            else:
+                result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+                print(f"Start: Refine {result_dir} -width {new_width}")
+                refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
+                # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W {new_width}
+                print(f"video3: {front_video}")
+                fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
+                # front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+                semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+                front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
+        else:
+            if mask_ch1:
+            # if mask_ch != "As is Base":
+                fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
+                # if mask_ch == 'Nothing Base':
+                if mask_type == 'Nothing Base': 
+                    semi_final_video = find_last_folder_and_mp4_file(stylize_fg_dir)
+            else:
+                fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+                semi_final_video = find_last_folder_and_mp4_file(stylize_dir)
+
+        # if mask_ch == "Original":
+        if mask_ch1 and mask_type == 'Original': 
+            yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generating...", scale=1, interactive=False)
+            bg_result = get_last_sorted_subfolder(stylize_bg_dir)
+
+            print(f"fg_result:{fg_result}")
+            if bg_config is not None:
+                print(f"bg_dir: {bg_result}")
+            else:
+                print(f"bg_dir: {stylize_bg_dir/'00_img2img'}")
+
+            if bg_config is not None:
+                final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
+                # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}  
+            else:
+                bg_result = stylize_bg_dir/'00_img2img'
+                composite(stylize_dir=stylize_dir, bg_dir=stylize_bg_dir/'00_img2img', fg_dir=fg_result)
+                # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}
+
+            semi_final_video = find_and_get_composite_video(stylize_dir)
+            composite = find_and_get_composite_video(stylize_dir)
+        print(f"final_video_dir: {semi_final_video}")
+
+        final_dir = os.path.dirname(semi_final_video)
+        final_video = os.path.join(final_dir,  video_name + ".mp4")
+
+    #    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
+        try:
+            video = Path(video).as_posix()
+            semi_final_video = Path(semi_final_video).as_posix()
+            final_video = Path(final_video).as_posix()
+            create_video(video, semi_final_video, final_video)
+            print(f"new_file_path: {final_video}")
+
+            yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+        except Exception as e:
+            # print(f"error:{e}")
+            traceback.print_exc()
+            # print(type(e))    # the exception type
+            # print(e.args)     # arguments stored in .args
+            # print(e)          # __str__ allows args to be printed directly,
+            final_video = semi_final_video
+            yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+
+    except Exception as inst:
+        yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+        # print(type(inst))    # the exception type
+        # print(inst.args)     # arguments stored in .args
+        print(inst)          # __str__ allows args to be printed directly,
         traceback.print_exc()
-        # print(type(e))    # the exception type
-        # print(e.args)     # arguments stored in .args
-        # print(e)          # __str__ allows args to be printed directly,
-        final_video = semi_final_video
-        yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
-        
+
 def launch():
     result_list = create_file_list("config/fix")
     safetensor_files = find_safetensor_files("data/sd_models")
@@ -421,19 +435,17 @@ def launch():
 
             with gr.Column():
                 with gr.Group():
-                    o_status = gr.Label(value="Not Started Yet", label="Status", scale=2)
+                    o_status = gr.Label(value="Not Started Yet", label="Status", scale=4)
                     with gr.Row():
-                        o_video1 = gr.Video(width=128, label="Original Video", scale=2)
-                        with gr.Row():
-                            o_video2_1 = gr.Video(width=128, label="Mask", scale=1)
-                            o_video2_2 = gr.Video(width=128, label="Line Art", scale=1)
-                        with gr.Row():
-                            o_video2_3 = gr.Video(width=128, label="Depth", scale=1)
-                            o_video2_4 = gr.Video(width=128, label="Open Pose", scale=1)
-                    with gr.Row():
-                        o_video3 = gr.Video(width=256, label="Front Video", scale=2)
-                        o_video4 = gr.Video(width=256, label="Front Video (Refined)", scale=2)
-                        o_video5 = gr.Video(width=256, label="Generated Video", scale=2)
+                        o_original = gr.Video(width=128, label="Original Video", scale=1)
+                        o_mask = gr.Video(width=128, label="Mask", scale=1)
+                        o_lineart = gr.Video(width=128, label="Line Art", scale=1)
+                        o_depth = gr.Video(width=128, label="Depth", scale=1)
+                        o_openpose = gr.Video(width=128, label="Open Pose", scale=1)
+                        o_front = gr.Video(width=128, label="Front Video", scale=1)
+                        o_front_refine = gr.Video(width=128, label="Front Video (Refined)", scale=1)
+                        o_composite = gr.Video(width=128, label="Composite Video", scale=1)
+                        o_final = gr.Video(width=128, label="Generated Video", scale=1)
         
         btn.click(fn=execute_wrapper,
                   inputs=[url, fps,
@@ -453,7 +465,7 @@ def launch():
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           delete_if_exists, test_run, refine],
-                  outputs=[o_status, o_video1, o_video2_1, o_video2_2, o_video2_3, o_video2_4, o_video3, o_video4, btn])
+                  outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_front, o_front_refine, o_composite, o_final, btn])
 
         ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type])        
         ad_ch.change(fn=change_ad, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
