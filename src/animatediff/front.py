@@ -295,7 +295,10 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
     
 #    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
     try:
-        create_video(video.as_posix(), semi_final_video.as_posix(), final_video.as_posix())
+        video = Path(video).as_posix()
+        semi_final_video = Path(semi_final_video).as_posix()
+        final_video = Path(final_video).as_posix()
+        create_video(video, semi_final_video, final_video)
         print(f"new_file_path: {final_video}")
         
         yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
@@ -420,7 +423,7 @@ def launch():
                 with gr.Group():
                     o_status = gr.Label(value="Not Started Yet", label="Status", scale=2)
                     with gr.Row():
-                        o_video1 = gr.Video(width=256, label="Original Video", scale=2)
+                        o_video1 = gr.Video(width=128, label="Original Video", scale=2)
                         with gr.Row():
                             o_video2_1 = gr.Video(width=128, label="Mask", scale=1)
                             o_video2_2 = gr.Video(width=128, label="Line Art", scale=1)
@@ -429,7 +432,8 @@ def launch():
                             o_video2_4 = gr.Video(width=128, label="Open Pose", scale=1)
                     with gr.Row():
                         o_video3 = gr.Video(width=256, label="Front Video", scale=2)
-                        o_video4 = gr.Video(width=256, label="Generated Video", scale=2)
+                        o_video4 = gr.Video(width=256, label="Front Video (Refined)", scale=2)
+                        o_video5 = gr.Video(width=256, label="Generated Video", scale=2)
         
         btn.click(fn=execute_wrapper,
                   inputs=[url, fps,
