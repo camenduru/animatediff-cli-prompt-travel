@@ -217,7 +217,8 @@ def change_ip(enable):
     ip_image = gr.UploadButton(interactive=enable)
     ip_scale = gr.Slider(interactive=enable)
     ip_type = gr.Radio(interactive=enable)
-    return ip_ch, ip_image, ip_scale, ip_type
+    ip_prompt_ratio = gr.Slider(interactive=enable)
+    return ip_ch, ip_image, ip_scale, ip_type, ip_prompt_ratio
     
 # def change_ad(enable):
 #     ad_ch = gr.Checkbox(value=enable)
@@ -262,7 +263,7 @@ def create_config_by_gui(
     mo1_ch: str, mo1_scale: float,
     mo2_ch: str, mo2_scale: float,
     mask_target:str,
-    ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,
+    ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,ip_prompt_ratio:float,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
     me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float
@@ -303,6 +304,7 @@ def create_config_by_gui(
     print(f"ip_image: {ip_image}")
     print(f"ip_scale: {ip_scale}")
     print(f"ip_type: {ip_type}")
+    print(f"ip_prompt_ratio: {ip_prompt_ratio}")
     print(f"ad_ch: {ad_ch}")
     print(f"ad_scale: {ad_scale}")
     print(f"op_ch: {op_ch}")
@@ -421,6 +423,7 @@ def create_config_by_gui(
     model_config.ip_adapter_map["enable"] = ip_ch
     model_config.ip_adapter_map["input_image_dir"] = Path("..") / stylize_dir / '00_ipadapter'
     model_config.ip_adapter_map["scale"] = ip_scale
+    model_config.ip_adapter_map["prompt_fixed_ratio"] = ip_prompt_ratio
     model_config.ip_adapter_map["is_full_face"] = True if ip_type == "full_face" else False
     model_config.ip_adapter_map["is_plus_face"] = True if ip_type == "plus_face" else False
     model_config.ip_adapter_map["is_plus"] = True if ip_type == "plus" else False

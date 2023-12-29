@@ -34,7 +34,7 @@ def execute_wrapper(
       inp_lora4: str, inp_lora4_step: float,
       mo1_ch: str, mo1_scale: float,
       mo2_ch: str, mo2_scale: float,
-      ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str,
+      ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str, ip_prompt_ratio:float,
       mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
@@ -83,7 +83,7 @@ def execute_wrapper(
             mo1_ch=mo1_ch, mo1_scale=mo1_scale,
             mo2_ch=mo2_ch, mo2_scale=mo2_scale,
             mask_target=mask_target,
-            ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,
+            ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_prompt_ratio=ip_prompt_ratio,
             ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
             dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
             me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale
@@ -347,20 +347,25 @@ def launch():
         with gr.Row():
             gr.Markdown(
                 """
-                # AnimateDiff-V2V-GUI
+                # AnimateDiff-Prompt-Travel-Extravaganza
                 """, scale=8)
             btn = gr.Button("Generate Video", scale=1)
         with gr.Row():
             with gr.Column():
+                with gr.Tab("V2V"):
+                    url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL")
+                # with gr.Tab("T2V"):
+                #     with gr.Row():
+                #         t_width = gr.Slider(minimum=384, maximum=1356,  step=1, value=512, label="Width")
+                #         t_height = gr.Slider(minimum=384, maximum=1356,  step=1, value=904, label="Height")
+                #     t_length = gr.Slider(minimum=16, maximum=3840,  step=0.05, value=1.0, label="Length")
+                    # key_prompts = gr.Textbox(lines=2, value='"0": "best quality"', label="Prompt")
                 with gr.Group():
-                    with gr.Group():
-                        with gr.Row():
-                            url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", placeholder="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL", scale=3)
-                            fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps", scale=1)
                     with gr.Group():
                         with gr.Row():
                             inp_model = gr.Dropdown(choices=safetensor_files, label="Model")
                             inp_vae = gr.Dropdown(choices=vae_choice, label="VAE")
+                            fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps")
                     with gr.Group():
                         with gr.Row():
                             inp_mm = gr.Dropdown(choices=mm_files, label="Motion Module")
@@ -403,14 +408,15 @@ def launch():
                         with gr.Row():
                             mo2_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA2", scale=3)
                             mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale")
-                        
+
                     with gr.Accordion("Special Effects", open=True):
-                        
+
                         ip_ch = gr.Checkbox(label="IPAdapter", value=False)
                         with gr.Row():
                             ip_image = gr.Image(height=256, type="pil", interactive=False)
                             with gr.Column():
                                 ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="scale", interactive=False)
+                                ip_prompt_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.5, label="prompt fixed ratio", interactive=False)
                                 ip_type = gr.Radio(choices=ip_choice, label="Type", value="plus_face", interactive=False)
                         with gr.Row():
                             with gr.Column():
@@ -437,7 +443,7 @@ def launch():
                         with gr.Row():
                             me_ch = gr.Checkbox(label="Mediapipe_face", value=False)
                             me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Mediapipe Weight ", interactive=False)
-                                
+
                  #   inp2 = gr.Dropdown(choices=result_list, info="please select", label="Config")
                     with gr.Row():
                         delete_if_exists = gr.Checkbox(label="Delete cache")
@@ -472,7 +478,7 @@ def launch():
                           inp_lora4, inp_lora4_step,
                           mo1_ch, mo1_scale,
                           mo2_ch, mo2_scale,
-                          ip_ch, ip_image, ip_scale, ip_type,
+                          ip_ch, ip_image, ip_scale, ip_type, ip_prompt_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
@@ -480,7 +486,7 @@ def launch():
                           delete_if_exists, test_run, refine],
                   outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_front, o_front_refine, o_composite, o_final, btn])
 
-        ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type])        
+        ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_prompt_ratio])        
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
         op_ch.change(fn=change_cn, inputs=[op_ch], outputs=[op_ch, op_scale])
         dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
