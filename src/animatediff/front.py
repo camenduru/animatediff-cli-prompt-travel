@@ -42,21 +42,21 @@ def execute_wrapper(
       me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
       delete_if_exists: bool, is_test: bool, is_refine: bool,
       progress=gr.Progress(track_tqdm=True)):
-    yield 'generation Initiated...', None, None, None, None, None, None, None,None, None, gr.Button("Generating...", scale=1, interactive=False)
+    yield 'generation Initiated...', None, None, None, None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
     start_time = time.time()
     time_str = getNow()
     try:
         if url is None:
-            yield 'Error: URL input is required.', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: URL input is required.', None, None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_model == []:
-            yield 'Error: Select Model', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: Select Model', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_mm == []:
-            yield 'Error: Select Motion Module', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: Select Motion Module', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_sche == []:
-            yield 'Error: Select Sampling Method', None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'Error: Select Sampling Method', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
 
         bg_config = None
@@ -94,7 +94,7 @@ def execute_wrapper(
         yield from execute_impl(fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
                                 is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1,is_low=low_vr )
     except Exception as inst:
-        yield 'Runtime Error', None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
+        yield 'Runtime Error', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
         # print(type(inst))    # the exception type
         # print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly,
@@ -118,12 +118,13 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         depth_video = None
         lineart_video = None
         openpose_video = None
+        media_face_video = None
         front_video = None
         front_refine = None
         composite_video = None
         final_video = None
 
-        yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
+        yield 'generating config...', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
         separator = os.path.sep
         video_name = os.path.splitext(os.path.normpath(video.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
 
@@ -172,7 +173,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
         config = get_config_path(now_str)
         model_config: ModelConfig = get_model_config(config)       
 
-        yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
+        yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
 
         print(f"Start: stylize generate {stylize_fg_dir}")
         if is_test:
@@ -233,13 +234,16 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
                     lineart_video = filename
                 if os.path.basename(cn_folder) == "controlnet_openpose":
                     openpose_video = filename
+                if os.path.basename(cn_folder) == "controlnet_mediapipe_face":
+                    media_face_video = filename
 
+                    
         if is_refine:
             cur_width = model_config.stylize_config["0"]["width"]
             print(f"cur_width {cur_width}")
             new_width = int(float(cur_width) * float(1.5))
             print(f"refine width {new_width}")
-            yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
+            yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
             # if mask_ch != "As is Base":
             if mask_ch1:
                 result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
@@ -279,7 +283,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
 
         # if mask_ch == "Original":
         if mask_ch1 and mask_type == 'Original': 
-            yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
+            yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
             bg_result = get_last_sorted_subfolder(stylize_bg_dir)
 
             print(f"fg_result:{fg_result}")
@@ -315,7 +319,7 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             create_video(video, semi_final_video, final_video)
             print(f"new_file_path: {final_video}")
 
-            yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
         except Exception as e:
             # print(f"error:{e}")
             traceback.print_exc()
@@ -323,10 +327,10 @@ def execute_impl(now_str:str, video: str, delete_if_exists: bool, is_test: bool,
             # print(e.args)     # arguments stored in .args
             # print(e)          # __str__ allows args to be printed directly,
             final_video = semi_final_video
-            yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+            yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
 
     except Exception as inst:
-        yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+        yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
         # print(type(inst))    # the exception type
         # print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly,
@@ -449,8 +453,8 @@ def launch():
                             la_ch = gr.Checkbox(label="Lineart", value=False)
                             la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Lineart Weight", interactive=False)
                         with gr.Row():
-                            me_ch = gr.Checkbox(label="Mediapipe_face", value=False)
-                            me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Mediapipe Weight ", interactive=False)
+                            me_ch = gr.Checkbox(label="Mediapipe Face", value=False)
+                            me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Mediapipe Face Weight ", interactive=False)
 
                  #   inp2 = gr.Dropdown(choices=result_list, info="please select", label="Config")
                     with gr.Row():
@@ -465,9 +469,10 @@ def launch():
                     with gr.Row():
                         o_original = gr.Video(width=128, label="Original Video", scale=1)
                         o_mask = gr.Video(width=128, label="Mask", scale=1)
-                        o_lineart = gr.Video(width=128, label="Line Art", scale=1)
-                        o_depth = gr.Video(width=128, label="Depth", scale=1)
                         o_openpose = gr.Video(width=128, label="Open Pose", scale=1)
+                        o_depth = gr.Video(width=128, label="Depth", scale=1)
+                        o_lineart = gr.Video(width=128, label="Line Art", scale=1)
+                        o_mediaface = gr.Video(width=128, label="Mediapipe Face", scale=1)
                         o_front = gr.Video(width=128, label="Front Video", scale=1)
                         o_front_refine = gr.Video(width=128, label="Front Video (Refined)", scale=1)
                         o_composite = gr.Video(width=128, label="Composite Video", scale=1)
@@ -493,7 +498,7 @@ def launch():
                           dp_ch, dp_scale, la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
                           delete_if_exists, test_run, refine],
-                  outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_front, o_front_refine, o_composite, o_final, btn])
+                  outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_mediaface, o_front, o_front_refine, o_composite, o_final, btn])
 
         ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])        
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
