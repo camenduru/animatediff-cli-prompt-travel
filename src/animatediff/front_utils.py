@@ -217,8 +217,8 @@ def change_ip(enable):
     ip_image = gr.UploadButton(interactive=enable)
     ip_scale = gr.Slider(interactive=enable)
     ip_type = gr.Radio(interactive=enable)
-    ip_prompt_ratio = gr.Slider(interactive=enable)
-    return ip_ch, ip_image, ip_scale, ip_type, ip_prompt_ratio
+    ip_image_ratio = gr.Slider(interactive=enable)
+    return ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio
     
 # def change_ad(enable):
 #     ad_ch = gr.Checkbox(value=enable)
@@ -253,9 +253,9 @@ def create_config_by_gui(
     model: str, vae: str,
     motion_module: str, context:str, scheduler: str, 
     is_lcm: bool, is_hires: bool,
-    step: int, cfg: float, seed:int, 
-    head_prompt:str,
-    neg_prompt:str,
+    step: int, cfg: float, seed:int,
+    single_prompt: bool, prompt_fixed_ratio: float,
+    head_prompt:str, inp_pro_map:str, neg_prompt:str,
     inp_lora1: str, inp_lora1_step: float,
     inp_lora2: str, inp_lora2_step: float,
     inp_lora3: str, inp_lora3_step: float,
@@ -263,7 +263,7 @@ def create_config_by_gui(
     mo1_ch: str, mo1_scale: float,
     mo2_ch: str, mo2_scale: float,
     mask_target:str,
-    ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,ip_prompt_ratio:float,
+    ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
     me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float
@@ -286,7 +286,10 @@ def create_config_by_gui(
     print(f"step: {step}")
     print(f"cfg: {cfg}")
     print(f"Seed: {seed}")
+    print(f"is_single_prompt_mode: {single_prompt}")
+    print(f"prompt_fixed_ratio: {prompt_fixed_ratio}")
     print(f"head_prompt: {head_prompt}")
+    print(f"prompt_map: {inp_pro_map}")
     print(f"neg_prompt: {neg_prompt}")
     print(f"inp_lora1: {inp_lora1}")
     print(f"inp_lora1_step: {inp_lora1_step}")
@@ -304,7 +307,7 @@ def create_config_by_gui(
     print(f"ip_image: {ip_image}")
     print(f"ip_scale: {ip_scale}")
     print(f"ip_type: {ip_type}")
-    print(f"ip_prompt_ratio: {ip_prompt_ratio}")
+    print(f"ip_image_ratio: {ip_image_ratio}")
     print(f"ad_ch: {ad_ch}")
     print(f"ad_scale: {ad_scale}")
     print(f"op_ch: {op_ch}")
@@ -328,7 +331,11 @@ def create_config_by_gui(
     model_config.steps = step
     model_config.guidance_scale = cfg
     model_config.scheduler = scheduler
+    model_config.is_single_prompt_mode = single_prompt
+    model_config.prompt_fixed_ratio = prompt_fixed_ratio
     model_config.head_prompt = head_prompt
+    data_dict = dict(eval(f"{{{inp_pro_map}}}"))
+    model_config.prompt_map = data_dict
     model_config.n_prompt = [neg_prompt]
     model_config.seed = [seed]
     # model_config.n_prompt = [neg.strip() for neg in neg_prompt.split(',') if neg]
@@ -423,7 +430,7 @@ def create_config_by_gui(
     model_config.ip_adapter_map["enable"] = ip_ch
     model_config.ip_adapter_map["input_image_dir"] = Path("..") / stylize_dir / '00_ipadapter'
     model_config.ip_adapter_map["scale"] = ip_scale
-    model_config.ip_adapter_map["prompt_fixed_ratio"] = ip_prompt_ratio
+    model_config.ip_adapter_map["prompt_fixed_ratio"] = ip_image_ratio
     model_config.ip_adapter_map["is_full_face"] = True if ip_type == "full_face" else False
     model_config.ip_adapter_map["is_plus_face"] = True if ip_type == "plus_face" else False
     model_config.ip_adapter_map["is_plus"] = True if ip_type == "plus" else False

@@ -27,14 +27,15 @@ def execute_wrapper(
       inp_mm: str, inp_context: str, inp_sche: str, 
       inp_lcm: bool, inp_hires: bool, low_vr:bool,
       inp_step: int, inp_cfg: float, seed:int,
-      inp_posi: str, inp_neg: str, 
+      single_prompt: bool, prompt_fixed_ratio: float,
+      inp_posi: str, inp_pro_map:str, inp_neg: str, 
       inp_lora1: str, inp_lora1_step: float,
       inp_lora2: str, inp_lora2_step: float,
       inp_lora3: str, inp_lora3_step: float,
       inp_lora4: str, inp_lora4_step: float,
       mo1_ch: str, mo1_scale: float,
       mo2_ch: str, mo2_scale: float,
-      ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str, ip_prompt_ratio:float,
+      ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str, ip_image_ratio:float,
       mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
@@ -75,7 +76,8 @@ def execute_wrapper(
             motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
             is_lcm=inp_lcm, is_hires=inp_hires,
             step=inp_step, cfg=inp_cfg, seed=seed,
-            head_prompt=inp_posi, neg_prompt=inp_neg,
+            single_prompt=single_prompt, prompt_fixed_ratio=single_prompt,
+            head_prompt=inp_posi, inp_pro_map=inp_pro_map, neg_prompt=inp_neg,
             inp_lora1=inp_lora1, inp_lora1_step=inp_lora1_step,
             inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
             inp_lora3=inp_lora3, inp_lora3_step=inp_lora3_step,
@@ -83,7 +85,7 @@ def execute_wrapper(
             mo1_ch=mo1_ch, mo1_scale=mo1_scale,
             mo2_ch=mo2_ch, mo2_scale=mo2_scale,
             mask_target=mask_target,
-            ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_prompt_ratio=ip_prompt_ratio,
+            ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_image_ratio=ip_image_ratio,
             ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
             dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
             me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale
@@ -381,7 +383,13 @@ def launch():
                             seed = gr.Number(value=-1, label="Seed")
                             inp_step = gr.Slider(minimum=1, maximum=50, step=1, value=10, label="Sampling Steps")
                             inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=2.4, label="CFG Scale")
+                    with gr.Group():
+                        with gr.Row():
+                            single_prompt = gr.Checkbox(label="Single Prompt Mode", value=False)
+                            prompt_fixed_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.5, label="Prompt Fixed Ratio")
                     inp_posi = gr.Textbox(lines=2, value="1girl, beautiful", placeholder="1girl, beautiful", label="Positive Prompt")
+                    with gr.Accordion("Prompt Map", open=False):
+                        inp_pro_map = gr.Textbox(lines=3, value='"0": "best quality",', show_label=False)
                     inp_neg = gr.Textbox(lines=2, value="low quality, low res,", placeholder="low quality, low res,", label="Negative Prompt")
                     with gr.Accordion("LoRAs", open=False):
                         with gr.Group():
@@ -416,7 +424,7 @@ def launch():
                             ip_image = gr.Image(height=256, type="pil", interactive=False)
                             with gr.Column():
                                 ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="scale", interactive=False)
-                                ip_prompt_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.5, label="prompt fixed ratio", interactive=False)
+                                ip_image_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.5, label="Image Fixed Ratio", interactive=False)
                                 ip_type = gr.Radio(choices=ip_choice, label="Type", value="plus_face", interactive=False)
                         with gr.Row():
                             with gr.Column():
@@ -471,14 +479,15 @@ def launch():
                           inp_mm, inp_context, inp_sche, 
                           inp_lcm, inp_hires, low_vr,
                           inp_step, inp_cfg, seed,
-                          inp_posi, inp_neg, 
+                          single_prompt, prompt_fixed_ratio,
+                          inp_posi, inp_pro_map, inp_neg, 
                           inp_lora1, inp_lora1_step,
                           inp_lora2, inp_lora2_step,
                           inp_lora3, inp_lora3_step,
                           inp_lora4, inp_lora4_step,
                           mo1_ch, mo1_scale,
                           mo2_ch, mo2_scale,
-                          ip_ch, ip_image, ip_scale, ip_type, ip_prompt_ratio,
+                          ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
@@ -486,7 +495,7 @@ def launch():
                           delete_if_exists, test_run, refine],
                   outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_front, o_front_refine, o_composite, o_final, btn])
 
-        ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_prompt_ratio])        
+        ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])        
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
         op_ch.change(fn=change_cn, inputs=[op_ch], outputs=[op_ch, op_scale])
         dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
