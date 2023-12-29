@@ -76,7 +76,7 @@ def execute_wrapper(
             motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
             is_lcm=inp_lcm, is_hires=inp_hires,
             step=inp_step, cfg=inp_cfg, seed=seed,
-            single_prompt=single_prompt, prompt_fixed_ratio=single_prompt,
+            single_prompt=single_prompt, prompt_fixed_ratio=prompt_fixed_ratio,
             head_prompt=inp_posi, inp_pro_map=inp_pro_map, neg_prompt=inp_neg,
             inp_lora1=inp_lora1, inp_lora1_step=inp_lora1_step,
             inp_lora2=inp_lora2, inp_lora2_step=inp_lora2_step,
