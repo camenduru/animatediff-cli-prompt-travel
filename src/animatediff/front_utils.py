@@ -470,7 +470,6 @@ def save_image_to_path(image, file_path):
 
             # イメージを指定したパスに保存
             image.save(file_path)
-            print(f"Image saved successfully to {file_path}")
             print(f"Image saved successfully to {file_path.resolve()}")
         except Exception as e:
             print(f"An error occurred while saving the image: {e}")
