@@ -88,7 +88,7 @@ def execute_wrapper(
             now_str=time_str,
             video = saved_file,
             stylize_dir = stylize_dir, 
-            model=inp_model, vae=inp_vae, 
+            model=inp_model, vae=inp_vae, fps=fps,
             motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
             is_lcm=inp_lcm, is_hires=inp_hires,
             step=inp_step, cfg=inp_cfg, seed=seed,
@@ -455,8 +455,8 @@ def launch():
                         with gr.Row():
                             ip_image = gr.Image(height=256, type="pil", interactive=False)
                             with gr.Column():
-                                ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=0.5, label="scale", interactive=False)
-                                ip_image_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.5, label="Image Fixed Ratio", interactive=False)
+                                ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=1.0, label="scale", interactive=False)
+                                ip_image_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.8, label="Image Fixed Ratio", interactive=False)
                                 ip_type = gr.Radio(choices=ip_choice, label="Type", value="plus_face", interactive=False)
                         with gr.Row() as mask_grp:
                             with gr.Column():
@@ -473,13 +473,13 @@ def launch():
                             ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet Weight")
                         with gr.Row() as op_grp:
                             op_ch = gr.Checkbox(label="Open Pose", value=True)
-                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Open Pose Weight")
+                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Open Pose Weight")
                         with gr.Row() as dp_grp:
                             dp_ch = gr.Checkbox(label="Depth", value=False)
-                            dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Depth Weight", interactive=False)
+                            dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Depth Weight", interactive=False)
                         with gr.Row() as la_grp:
                             la_ch = gr.Checkbox(label="Lineart", value=False)
-                            la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Lineart Weight", interactive=False)
+                            la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Lineart Weight", interactive=False)
                         with gr.Row() as me_grp:
                             me_ch = gr.Checkbox(label="Mediapipe Face", value=False)
                             me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Mediapipe Face Weight ", interactive=False)

@@ -258,7 +258,7 @@ def create_config_by_gui(
     now_str:str,
     video:str,
     stylize_dir: Path, 
-    model: str, vae: str,
+    model: str, vae: str, fps:int,
     motion_module: str, context:str, scheduler: str, 
     is_lcm: bool, is_hires: bool,
     step: int, cfg: float, seed:int,
@@ -288,6 +288,7 @@ def create_config_by_gui(
     print(f"model: {model}")
     print(f"vae: {vae}")
     print(f"motion_module: {motion_module}")
+    print(f"fps: {fps}")
     print(f"context: {context}")
     print(f"scheduler: {scheduler}")
     print(f"is_lcm: {is_lcm}")
@@ -398,6 +399,14 @@ def create_config_by_gui(
                 "stride": 0
             }
         }
+    model_config.output= {
+        "format": "mp4",
+        "fps": fps,
+        "encode_param": {
+            "crf": 10
+        }
+    },
+    
     model_config.lora_map = {}
     print(inp_lora1)
 #    if inp_lora1 is not None:
