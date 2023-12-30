@@ -223,12 +223,30 @@ def change_ip(enable):
 def select_v2v():
     tab_select = gr.Textbox(lines=1, value='v2v', show_label=False)
     btn = gr.Button("Generate V2V", scale=1)
-    return tab_select, btn
+    mask_grp = gr.Row(visible=True)
+    i2i_grp = gr.Row(visible=True)
+    ad_grp = gr.Row(visible=True)
+    op_grp = gr.Row(visible=True)
+    dp_grp = gr.Row(visible=True)
+    la_grp = gr.Row(visible=True)
+    me_grp = gr.Row(visible=True)
+    delete_if_exists = gr.Checkbox(visible=True)
+    test_run = gr.Checkbox(visible=True)
+    return tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
 
 def select_t2v():
     tab_select = gr.Textbox(lines=1, value='t2v', show_label=False)
     btn = gr.Button("Generate T2V", scale=1)
-    return tab_select, btn
+    mask_grp = gr.Row(visible=False)
+    i2i_grp = gr.Row(visible=False)
+    ad_grp = gr.Row(visible=False)
+    op_grp = gr.Row(visible=False)
+    dp_grp = gr.Row(visible=False)
+    la_grp = gr.Row(visible=False)
+    me_grp = gr.Row(visible=False)
+    delete_if_exists = gr.Checkbox(visible=False)
+    test_run = gr.Checkbox(visible=False)
+    return tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
 
 def change_cn(enable):
     ch = gr.Checkbox(value=enable)
@@ -256,7 +274,8 @@ def create_config_by_gui(
     ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
-    me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float
+    me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float,
+    tab_select:str, t_name: str, t_length:int, t_width:int, t_height:int
 ) -> Path:
     data_dir = get_dir("data")
     org_config='config/fix/real_base2.json'
@@ -310,6 +329,11 @@ def create_config_by_gui(
     print(f"me_scale: {me_scale}")
     print(f"i2i_ch: {i2i_ch}")
     print(f"i2i_scale: {i2i_scale}")
+    print(f"tab_select: {tab_select}")
+    print(f"t_name: {t_name}")
+    print(f"t_length: {t_length}")
+    print(f"t_width: {t_width}")
+    print(f"t_height: {t_height}")
 
     print(ip_image)
     
@@ -366,9 +390,9 @@ def create_config_by_gui(
                 "hint": ""
             },
             "0": {
-                "width": 512,
-                "height": 904,
-                "length": 16,
+                "width": 512 if tab_select == "V2V" else t_width,
+                "height": 904 if tab_select == "V2V" else t_height,
+                "length": 16 if tab_select == "V2V" else t_length,
                 "context": 16,
                 "overlap": 4,
                 "stride": 0
@@ -473,34 +497,35 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, video_name:str, mask_ch:bool):
+def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str):
     config_path = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config_path)
     stylize_dir = get_stylize_dir(video_name)
     stylize_fg_dir = get_fg_dir(video_name)
     
-    img2img_dir = stylize_dir/"00_img2img"
-    img = Image.open( img2img_dir.joinpath("00000000.png") )
-    W, H = img.size
-    gradual_latent_hires_fix = model_config.gradual_latent_hires_fix_map["enable"]
-    base_size = 768 if gradual_latent_hires_fix else 512
-    if W < H:
-        width = base_size
-        height = int(base_size * H/W)
-    else:
-        width = int(base_size * W/H)
-        height = base_size
-    width = int(width//8*8)
-    height = int(height//8*8)
-    length = len(glob.glob( os.path.join(img2img_dir, "[0-9]*.png"), recursive=False))
-    model_config.stylize_config["0"]= {
-                "width": width,
-                "height": height,
-                "length": length,
-                "context": 16,
-                "overlap": 4,
-                "stride": 0
-            }
+    if tab_select=='V2V':
+        img2img_dir = stylize_dir/"00_img2img"
+        img = Image.open( img2img_dir.joinpath("00000000.png") )
+        W, H = img.size
+        gradual_latent_hires_fix = model_config.gradual_latent_hires_fix_map["enable"]
+        base_size = 768 if gradual_latent_hires_fix else 512
+        if W < H:
+            width = base_size
+            height = int(base_size * H/W)
+        else:
+            width = int(base_size * W/H)
+            height = base_size
+        width = int(width//8*8)
+        height = int(height//8*8)
+        length = len(glob.glob( os.path.join(img2img_dir, "[0-9]*.png"), recursive=False))
+        model_config.stylize_config["0"]= {
+                    "width": width,
+                    "height": height,
+                    "length": length,
+                    "context": 16,
+                    "overlap": 4,
+                    "stride": 0
+                }
     actual_config_path = stylize_fg_dir/'prompt.json' if mask_ch else stylize_dir/'prompt.json'
     actual_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
     config_path.write_text(model_config.json(indent=4), encoding="utf-8")
