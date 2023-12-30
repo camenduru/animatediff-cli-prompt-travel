@@ -219,26 +219,16 @@ def change_ip(enable):
     ip_type = gr.Radio(interactive=enable)
     ip_image_ratio = gr.Slider(interactive=enable)
     return ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio
-    
-# def change_ad(enable):
-#     ad_ch = gr.Checkbox(value=enable)
-#     ad_scale = gr.Slider(interactive=enable)
-#     return ad_ch, ad_scale
 
-# def change_op(enable):
-#     op_ch = gr.Checkbox(value=enable)
-#     op_scale = gr.Slider(interactive=enable)
-#     return op_ch, op_scale
+def select_v2v():
+    tab_select = gr.Textbox(lines=1, value='v2v', show_label=False)
+    btn = gr.Button("Generate V2V", scale=1)
+    return tab_select, btn
 
-# def change_dp(enable):
-#     dp_ch = gr.Checkbox(value=enable)
-#     dp_scale = gr.Slider(interactive=enable)
-#     return dp_ch, dp_scale
-
-# def change_la(enable):
-#     la_ch = gr.Checkbox(value=enable)
-#     la_scale = gr.Slider(interactive=enable)
-#     return la_ch, la_scale
+def select_t2v():
+    tab_select = gr.Textbox(lines=1, value='t2v', show_label=False)
+    btn = gr.Button("Generate T2V", scale=1)
+    return tab_select, btn
 
 def change_cn(enable):
     ch = gr.Checkbox(value=enable)
@@ -455,6 +445,10 @@ def create_config_by_gui(
 def save_image_to_path(image, file_path):
     if image is not None:
         try:
+            folder_path = os.path.dirname(file_path)
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+            
             # 保存前にフォルダ内のデータを削除
             folder_path = os.path.dirname(file_path)
             if os.path.exists(folder_path):

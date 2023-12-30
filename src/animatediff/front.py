@@ -4,7 +4,7 @@ from animatediff.front_utils import (get_schedulers, getNow, download_video, cre
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
                                     create_config_by_gui, get_config_path, update_config, change_ip, change_cn, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
-                                    get_mask_dir, get_bg_dir)
+                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v)
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
 from animatediff.generate import save_output
@@ -356,11 +356,15 @@ def launch():
                 # AnimateDiff-Prompt-Travel-Extravaganza
                 """, scale=8)
             btn = gr.Button("Generate Video", scale=1)
+            # tab_select = gr.Textbox(lines=1, value="", show_label=False)
         with gr.Row():
             with gr.Column():
-                with gr.Tab("V2V"):
-                    url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL")
-                # with gr.Tab("T2V"):
+                with gr.Tab("V2V") as v2v_tab:
+                    # with gr.Tab("Data"):
+                    #     url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL")
+                    with gr.Tab("URL"):
+                        url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL")
+                # with gr.Tab("T2V") as t2v_tab:
                 #     with gr.Row():
                 #         t_width = gr.Slider(minimum=384, maximum=1356,  step=1, value=512, label="Width")
                 #         t_height = gr.Slider(minimum=384, maximum=1356,  step=1, value=904, label="Height")
@@ -507,7 +511,9 @@ def launch():
         la_ch.change(fn=change_cn, inputs=[la_ch], outputs=[la_ch, la_scale])
         me_ch.change(fn=change_cn, inputs=[me_ch], outputs=[me_ch, me_scale])
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
-
+        # v2v_tab.select(fn=select_v2v, inputs=[], outputs=[tab_select, btn])
+        # t2v_tab.select(fn=select_t2v, inputs=[], outputs=[tab_select, btn])
+        
     iface.queue()
     iface.launch(share=True)
 
