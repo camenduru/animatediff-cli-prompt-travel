@@ -13,6 +13,7 @@ import json
 import yt_dlp
 import shutil
 import pytz
+import PIL
 from PIL import Image
 
 from animatediff import __version__, get_dir
@@ -271,7 +272,7 @@ def create_config_by_gui(
     mo1_ch: str, mo1_scale: float,
     mo2_ch: str, mo2_scale: float,
     mask_target:str,
-    ip_ch: bool, ip_image: Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
+    ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
     me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float,
@@ -336,7 +337,7 @@ def create_config_by_gui(
     print(f"t_width: {t_width}")
     print(f"t_height: {t_height}")
 
-    print(ip_image)
+    print(type(ip_image))
     
     model_config.name = now_str
     model_config.path = Path(model)
@@ -353,7 +354,6 @@ def create_config_by_gui(
     model_config.prompt_map = data_dict
     model_config.n_prompt = [neg_prompt]
     model_config.seed = [seed]
-    # model_config.n_prompt = [neg.strip() for neg in neg_prompt.split(',') if neg]
     model_config.lcm_map = {
         "enable": is_lcm,
         "start_scale": 0.15,
@@ -405,10 +405,10 @@ def create_config_by_gui(
         "encode_param": {
             "crf": 10
         }
-    },
+    }
     
     model_config.lora_map = {}
-    print(inp_lora1)
+    # print(inp_lora1)
 #    if inp_lora1 is not None:
     if len(inp_lora1) > 0:
         model_config.lora_map.update({inp_lora1 : {
@@ -459,7 +459,7 @@ def create_config_by_gui(
     model_config.ip_adapter_map["is_plus"] = True if ip_type == "plus" else False
     model_config.ip_adapter_map["is_light"] = True if ip_type == "light" else False
     model_config.ip_adapter_map["save_input_image"] = False
-    save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
+    # save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
     
     model_config.controlnet_map["animatediff_controlnet"]["enable"] = ad_ch
     model_config.controlnet_map["animatediff_controlnet"]["controlnet_conditioning_scale"] = ad_scale
@@ -480,7 +480,7 @@ def save_image_to_path(image, file_path):
         try:
             folder_path = os.path.dirname(file_path)
             if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
+                os.makedirs(folder_path, exist_ok=True)
             
             # 保存前にフォルダ内のデータを削除
             folder_path = os.path.dirname(file_path)
@@ -506,12 +506,13 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str):
+def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image):
     config_path = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config_path)
     stylize_dir = get_stylize_dir(video_name)
     stylize_fg_dir = get_fg_dir(video_name)
-    
+    save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
+
     if tab_select=='V2V':
         img2img_dir = stylize_dir/"00_img2img"
         img = Image.open( img2img_dir.joinpath("00000000.png") )

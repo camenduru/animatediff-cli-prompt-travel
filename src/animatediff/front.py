@@ -12,7 +12,7 @@ from animatediff.generate import save_output
 from animatediff.stylize import generate, create_config, create_mask, composite
 from animatediff.cli import refine
 import traceback
-
+import PIL
 
 import io
 import os
@@ -35,7 +35,7 @@ def execute_wrapper(
       inp_lora4: str, inp_lora4_step: float,
       mo1_ch: str, mo1_scale: float,
       mo2_ch: str, mo2_scale: float,
-      ip_ch: bool, ip_image: str, ip_scale: float, ip_type: str, ip_image_ratio:float,
+      ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str, ip_image_ratio:float,
       mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
@@ -110,7 +110,7 @@ def execute_wrapper(
 
         yield from execute_impl(tab_select=tab_select, fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
                                 is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, 
-                                mask_padding1=mask_padding1,is_low=low_vr, t_name=t_name)
+                                mask_padding1=mask_padding1,is_low=low_vr, t_name=t_name, ip_image=ip_image)
     except Exception as inst:
         yield 'Runtime Error', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
         # print(type(inst))    # the exception type
@@ -122,7 +122,7 @@ def execute_wrapper(
     print(f"実行時間: {execution_time}秒")
 
 def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, 
-                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str):
+                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image,):
     if tab_select == 'V2V':
         if video.startswith("/notebooks"):
             video = video[len("/notebooks"):]
@@ -173,8 +173,9 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             if stylize_dir.exists():
                 print(f"Delete folder and create again")
                 shutil.rmtree(stylize_dir)
-            create_config(org_movie=video, fps=fps, low_vram=is_low)
-            # !animatediff stylize create-config {video} -f {fps}
+            if tab_select == 'V2V':
+                create_config(org_movie=video, fps=fps, low_vram=is_low)
+                # !animatediff stylize create-config {video} -f {fps}
 
         if not stylize_fg_dir.exists() and mask_ch1:
             create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True, low_vram=is_low)
@@ -190,7 +191,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                     False,
                     None,
                 )
-        update_config(now_str, video_name, mask_ch1, tab_select)
+        update_config(now_str, video_name, mask_ch1, tab_select, ip_image)
         config = get_config_path(now_str)
         model_config: ModelConfig = get_model_config(config)       
 
