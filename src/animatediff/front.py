@@ -23,12 +23,12 @@ import shutil
 # Define the function signature
 def execute_wrapper(
       tab_select:str, url: str, t_name: str, t_length:int, t_width:int, t_height:int, fps: int,
-      inp_model: str, inp_vae: str, 
-      inp_mm: str, inp_context: str, inp_sche: str, 
+      inp_model: str, inp_vae: str,
+      inp_mm: str, inp_context: str, inp_sche: str,
       inp_lcm: bool, inp_hires: bool, low_vr:bool,
       inp_step: int, inp_cfg: float, seed:int,
       single_prompt: bool, prompt_fixed_ratio: float,
-      inp_posi: str, inp_pro_map:str, inp_neg: str, 
+      inp_posi: str, inp_pro_map:str, inp_neg: str,
       inp_lora1: str, inp_lora1_step: float,
       inp_lora2: str, inp_lora2_step: float,
       inp_lora3: str, inp_lora3_step: float,
@@ -61,7 +61,7 @@ def execute_wrapper(
         if t_name is None and tab_select == 'T2V':
             yield 'Error: Video Name is required', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
             return
-        
+
         if tab_select == 'T2V':
             mask_ch1 = False
             ad_ch = False
@@ -69,27 +69,27 @@ def execute_wrapper(
             me_ch = False
             is_test = False
             delete_if_exists = True
-        
+
         bg_config = None
         if tab_select == 'V2V':
             save_folder = Path('data/video')
             saved_file = download_video(url, save_folder)
-        
+
             separator = os.path.sep
             video_name = os.path.splitext(os.path.normpath(saved_file.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
-        
+
         else:
             video_name = t_name
             saved_file = None
-        
+
         # video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
         stylize_dir= get_stylize_dir(video_name)
         create_config_by_gui(
             now_str=time_str,
             video = saved_file,
-            stylize_dir = stylize_dir, 
+            stylize_dir = stylize_dir,
             model=inp_model, vae=inp_vae, fps=fps,
-            motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
+            motion_module=inp_mm, context=inp_context, scheduler=inp_sche,
             is_lcm=inp_lcm, is_hires=inp_hires,
             step=inp_step, cfg=inp_cfg, seed=seed,
             single_prompt=single_prompt, prompt_fixed_ratio=prompt_fixed_ratio,
@@ -109,7 +109,7 @@ def execute_wrapper(
         )
 
         yield from execute_impl(tab_select=tab_select, fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
-                                is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, 
+                                is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1,
                                 mask_padding1=mask_padding1,is_low=low_vr, t_name=t_name, ip_image=ip_image)
     except Exception as inst:
         yield 'Runtime Error', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
@@ -121,7 +121,7 @@ def execute_wrapper(
     execution_time = end_time - start_time
     print(f"実行時間: {execution_time}秒")
 
-def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, 
+def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool,
                  bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image,):
     if tab_select == 'V2V':
         if video.startswith("/notebooks"):
@@ -193,7 +193,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 )
         update_config(now_str, video_name, mask_ch1, tab_select, ip_image)
         config = get_config_path(now_str)
-        model_config: ModelConfig = get_model_config(config)       
+        model_config: ModelConfig = get_model_config(config)
 
         yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
 
@@ -259,7 +259,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 if os.path.basename(cn_folder) == "controlnet_mediapipe_face":
                     media_face_video = filename
 
-                    
+
         if is_refine:
             cur_width = model_config.stylize_config["0"]["width"]
             print(f"cur_width {cur_width}")
@@ -277,7 +277,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 print(f"front_video: {front_video}")
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
                 print(f"fg_result1{fg_result}")
-                if mask_type == 'No Background': 
+                if mask_type == 'No Background':
                 # if mask_ch == 'Nothing Base':
                     semi_final_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
                     front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
@@ -297,14 +297,14 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             # if mask_ch != "As is Base":
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
                 # if mask_ch == 'Nothing Base':
-                if mask_type == 'Nothing Base': 
+                if mask_type == 'Nothing Base':
                     semi_final_video = find_last_folder_and_mp4_file(stylize_fg_dir)
             else:
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
                 semi_final_video = find_last_folder_and_mp4_file(stylize_dir)
 
         # if mask_ch == "Original":
-        if mask_ch1 and mask_type == 'Original': 
+        if mask_ch1 and mask_type == 'Original':
             yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
             bg_result = get_last_sorted_subfolder(stylize_bg_dir)
 
@@ -316,7 +316,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
             if bg_config is not None:
                 final_video_dir = composite(stylize_dir=stylize_dir, bg_dir=bg_result, fg_dir=fg_result)
-                # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}  
+                # !animatediff stylize composite {stylize_dir} -bg {bg_result} -fg {fg_result}
             else:
                 bg_result = stylize_bg_dir/'00_img2img'
                 print(f"stylize_dir: {stylize_dir}")
@@ -327,7 +327,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
             semi_final_video = find_and_get_composite_video(stylize_dir)
             composite_video = find_and_get_composite_video(stylize_dir)
-            
+
         print(f"final_video_dir: {semi_final_video}")
 
         final_dir = os.path.dirname(semi_final_video)
@@ -370,7 +370,7 @@ def launch():
     mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     vae_choice = find_safetensor_files("data/vae")
-    
+
     with gr.Blocks() as iface:
         with gr.Row():
             gr.Markdown(
@@ -490,7 +490,7 @@ def launch():
                         delete_if_exists = gr.Checkbox(label="Delete cache")
                         test_run = gr.Checkbox(label="Test Run", value=True)
                         refine = gr.Checkbox(label="Refine")
-                    
+
 
             with gr.Column():
                 with gr.Group():
@@ -506,15 +506,15 @@ def launch():
                         o_front_refine = gr.Video(width=128, label="Front Video (Refined)", scale=1)
                         o_composite = gr.Video(width=128, label="Composite Video", scale=1)
                         o_final = gr.Video(width=128, label="Generated Video", scale=1)
-        
+
         btn.click(fn=execute_wrapper,
                   inputs=[tab_select, url, t_name, t_length, t_width, t_height, fps,
-                          inp_model, inp_vae, 
-                          inp_mm, inp_context, inp_sche, 
+                          inp_model, inp_vae,
+                          inp_mm, inp_context, inp_sche,
                           inp_lcm, inp_hires, low_vr,
                           inp_step, inp_cfg, seed,
                           single_prompt, prompt_fixed_ratio,
-                          inp_posi, inp_pro_map, inp_neg, 
+                          inp_posi, inp_pro_map, inp_neg,
                           inp_lora1, inp_lora1_step,
                           inp_lora2, inp_lora2_step,
                           inp_lora3, inp_lora3_step,
@@ -529,7 +529,7 @@ def launch():
                           delete_if_exists, test_run, refine],
                   outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_mediaface, o_front, o_front_refine, o_composite, o_final, btn])
 
-        ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])        
+        ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
         op_ch.change(fn=change_cn, inputs=[op_ch], outputs=[op_ch, op_scale])
         dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
@@ -538,9 +538,14 @@ def launch():
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
         v2v_tab.select(fn=select_v2v, inputs=[], outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
         t2v_tab.select(fn=select_t2v, inputs=[], outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
-        
+
     iface.queue()
-    iface.launch(share=True)
+    from pyngrok import ngrok, conf
+    NGROK_TOKEN = os.environ.get('NGROK_TOKEN')
+    conf.get_default().auth_token = NGROK_TOKEN
+    public_url = ngrok.connect(7861).public_url
+    print(public_url)
+    iface.launch(server_port=7861, inline=False, share=False, debug=True)
 
     while True:
         pass
